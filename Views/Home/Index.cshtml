@@ -1,0 +1,89 @@
+﻿@{
+    ViewData["Title"] = "Dashboard";
+    var banner = new FaceAttendanceSystem.ViewModels.WelcomeBannerViewModel
+    {
+        Name = "Administrator",
+        Message = "Track daily attendance, verify employee identities, and manage access records for the department."
+    };
+}
+
+<partial name="_WelcomeBanner" model="banner" />
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card text-center text-white bg-primary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Registered Employees</h5>
+                <div class="stat-value">@ViewBag.TotalEmployees</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card text-center text-white bg-info h-100">
+            <div class="card-body">
+                <h5 class="card-title">Attendance Rate</h5>
+                <div class="stat-value">@(((decimal)ViewBag.AttendanceRate).ToString("0.0"))%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card text-center text-white bg-danger h-100">
+            <div class="card-body">
+                <h5 class="card-title">Absenteeism Rate</h5>
+                <div class="stat-value">@(((decimal)ViewBag.AbsenteeismRate).ToString("0.0"))%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card text-center text-white bg-warning h-100">
+            <div class="card-body">
+                <h5 class="card-title">Late Rate</h5>
+                <div class="stat-value">@(((decimal)ViewBag.LateRate).ToString("0.0"))%</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning-charge"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a asp-controller="Reports" asp-action="Index" class="btn btn-primary"><i class="bi bi-bar-chart-line"></i> Reports</a>
+                    <a asp-controller="Attendance" asp-action="Today" class="btn btn-outline-primary"><i class="bi bi-calendar-check"></i> Today's Attendance</a>
+                    <a asp-controller="Attendance" asp-action="CheckIn" class="btn btn-outline-primary"><i class="bi bi-camera"></i> Start Facial Recognition</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <h2 class="section-title">Recent Check-Ins</h2>
+        <div class="premium-table-wrapper">
+            <table class="table table-sm table-striped">
+                <thead>
+                    <tr>
+                        <th scope="col">Time</th>
+                        <th scope="col">Employee</th>
+                        <th scope="col">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in ViewBag.RecentCheckIns)
+                    {
+                        <tr>
+                            <td>@item.TimeRecorded.ToString("hh:mm tt")</td>
+                            <td>@item.Employee?.FullName</td>
+                            <td><partial name="_StatusBadge" model="@item.Status" /></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Grant Permissions";
+    if (ViewContext.RouteData.Values["controller"]?.ToString() == "Employee")
+    {
+        Layout = "_EmployeeLayout";
+    }
+}
+
+<div class="premium-form-card" style="max-width: 500px; margin: 2rem auto;">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-shield-lock"></i>
+        </div>
+        <div>
+            <h2>Grant Permissions</h2>
+            <p>Camera and location access are required for attendance.</p>
+        </div>
+    </div>
+
+    <div class="premium-form-body">
+        <p>DTCAM works without these, but you will be asked for them the first time a feature that needs them is used.</p>
+        <ul class="mb-3">
+            <li><i class="bi bi-camera me-1"></i><strong>Camera</strong> — to capture your face for check-in</li>
+            <li><i class="bi bi-geo-alt me-1"></i><strong>Location</strong> — to verify you are within the allowed area</li>
+        </ul>
+        <p class="form-text">
+            <i class="bi bi-shield-check"></i>
+            Access is requested only for the time you use DTCAM, and camera and location data are used
+            solely to verify attendance.
+        </p>
+
+        <form asp-action="GrantPermissions" method="post" id="permissionsForm">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-primary btn-lg w-100" id="btnGrantPermissions">
+                <i class="bi bi-camera me-2"></i>Grant Permissions
+            </button>
+        </form>
+        <p id="permissionStatus" class="mt-3 text-muted"></p>
+
+        @* Escape hatch: this page is optional, so leaving it must always work. *@
+        <a asp-action="Index" asp-controller="Home" class="btn btn-outline-secondary w-100 mt-3" id="btnSkipPermissions">
+            <i class="bi bi-arrow-right me-2"></i>Skip for now
+        </a>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        document.getElementById('permissionsForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const btn = document.getElementById('btnGrantPermissions');
+            const status = document.getElementById('permissionStatus');
+            btn.disabled = true;
+            status.textContent = 'Requesting permissions...';
+            status.className = 'mt-3 text-muted';
+
+            const results = [];
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                stream.getTracks().forEach(track => track.stop());
+                results.push('camera');
+            } catch (err) {
+                console.warn('Camera permission not granted:', err && err.name);
+                results.push('camera failed');
+            }
+
+            try {
+                await new Promise((resolve, reject) => {
+                    navigator.geolocation.getCurrentPosition(resolve, reject, {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    });
+                });
+                results.push('location');
+            } catch (err) {
+                console.warn('Location permission not granted:', err && err.code);
+                results.push('location failed');
+            }
+
+            // Report honestly and continue regardless. Refusing to proceed
+            // here is what previously locked users out of the app.
+            const denied = results.filter(r => r.indexOf('failed') !== -1);
+            if (denied.length === 0) {
+                status.textContent = 'All permissions granted. Saving...';
+                status.className = 'mt-3 text-success';
+                setTimeout(() => { document.getElementById('permissionsForm').submit(); }, 600);
+            } else {
+                const failed = denied.map(d => d.replace(' failed', '')).join(' and ');
+                status.textContent = failed + ' access was not granted. You can still use the app — it will ask again when needed.';
+                status.className = 'mt-3 text-danger';
+                btn.disabled = false;
+            }
+        });
+
+        // Skip returns to the dashboard and records the choice so the popup
+        // still appears later at the point of use.
+        document.getElementById('btnSkipPermissions').addEventListener('click', function () {
+            const form = document.getElementById('permissionsForm');
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'skipped';
+            input.value = 'true';
+            form.appendChild(input);
+        });
+    </script>
+}

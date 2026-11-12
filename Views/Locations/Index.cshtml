@@ -1,0 +1,389 @@
+@model IEnumerable<FaceAttendanceSystem.Models.Location>
+
+@{
+    ViewData["Title"] = "Locations";
+}
+
+<div class="premium-form-card mb-4">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-geo-alt"></i>
+        </div>
+        <div>
+            <h2>Locations</h2>
+            <p>Manage check-in locations and geofences.</p>
+        </div>
+    </div>
+
+    <div class="premium-form-body">
+        <div class="row">
+            <div class="col-md-8">
+                <div class="mb-3 position-relative">
+                    <label class="form-label" for="locationSearch">Find a location</label>
+                    <input type="text" id="locationSearch" class="form-control" placeholder="Search location (e.g. city, address)..." autocomplete="off" />
+                    <div id="searchResults" class="list-group mt-1" style="position:absolute; top:100%; left:0; right:0; z-index:1050; max-height:300px; overflow-y:auto;"></div>
+                </div>
+
+                <div id="map" style="height: 500px; border-radius: var(--radius-lg); border: 1px solid var(--color-border);"></div>
+            </div>
+            <div class="col-md-4">
+                <div class="premium-section-card mb-3">
+                    <div class="premium-section-header">
+                        <i class="bi bi-plus-circle"></i>
+                        Add Location
+                    </div>
+                    <div class="premium-section-body">
+                        <form asp-action="Create" method="post">
+                            <div class="mb-2">
+                                <label class="form-label">Name</label>
+                                <input type="text" name="name" class="form-control" placeholder="Location name" required />
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">Radius (meters)</label>
+                                <input type="number" name="radiusMeters" id="radiusInput" class="form-control" value="100" min="5" max="5000" />
+                            </div>
+                            <input type="hidden" name="latitude" id="inputLatitude" />
+                            <input type="hidden" name="longitude" id="inputLongitude" />
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-check2 me-2"></i>Save Location
+                            </button>
+                        </form>
+                        <p class="text-muted mt-2"><small>Drag the blue pin to move. Drag the red handle to resize radius. Click map to move pin.</small></p>
+                    </div>
+                </div>
+
+                <div class="premium-table-wrapper">
+                    <div class="premium-table-header">
+                        <h2>Saved Locations</h2>
+                    </div>
+                    <div class="table-responsive" style="max-height: 320px; overflow-y: auto;">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Radius</th>
+                                    <th class="text-end">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var loc in Model)
+                                {
+                                    <tr>
+                                        <td>
+                                            @loc.Name
+                                            @if (loc.IsActive)
+                                            {
+                                                <span class="badge bg-success ms-1">Active</span>
+                                            }
+                                        </td>
+                                        <td>@loc.RadiusMeters m</td>
+                                        <td class="text-end">
+                                            <div class="premium-actions justify-content-end">
+                                                @if (!loc.IsActive)
+                                                {
+                                                    <form asp-action="SetActive" method="post" class="d-inline">
+                                                        <input type="hidden" name="id" value="@loc.Id" />
+                                                        <button type="submit" class="btn btn-sm btn-success">
+                                                            <i class="bi bi-check2 me-1"></i>Set Active
+                                                        </button>
+                                                    </form>
+                                                }
+                                                <form asp-action="Delete" method="post" class="d-inline" onsubmit="return confirm('Delete location @loc.Name?');">
+                                                    <input type="hidden" name="id" value="@loc.Id" />
+                                <button type="submit" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash me-1"></i>Delete
+                                </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<style>
+    @@keyframes pulse {
+        0% { box-shadow: 0 0 0 0 rgba(182,154,98,0.55); }
+        70% { box-shadow: 0 0 0 12px rgba(182,154,98,0); }
+        100% { box-shadow: 0 0 0 0 rgba(182,154,98,0); }
+    }
+</style>
+
+<script>
+    (function () {
+        // Default centre: City of Manila. Leaflet refuses to render a tile
+        // layer until the map has a view, so the map must not depend on any
+        // later async work (server fetch, or a permission prompt) to appear.
+        const DEFAULT_CENTER = [14.5995, 120.9846];
+        const DEFAULT_ZOOM = 16;
+
+        const map = L.map('map', { center: DEFAULT_CENTER, zoom: DEFAULT_ZOOM });
+        let centerMarker = null;
+        let radiusMarker = null;
+        let activeCircle = null;
+        let currentLocationMarker = null;
+        const radiusInput = document.getElementById('radiusInput');
+        const inputLat = document.getElementById('inputLatitude');
+        const inputLng = document.getElementById('inputLongitude');
+
+        const centerIcon = L.divIcon({
+            className: 'center-icon',
+            html: '<div style="width:18px;height:18px;background:#786044;border:3px solid white;border-radius:50%;box-shadow:0 0 6px rgba(0,0,0,0.4);"></div>',
+            iconSize: [18, 18],
+            iconAnchor: [9, 9]
+        });
+
+        const radiusHandleIcon = L.divIcon({
+            className: 'radius-handle',
+            html: '<div style="width:14px;height:14px;background:#C44545;border:2px solid white;border-radius:50%;box-shadow:0 0 4px rgba(0,0,0,0.3);cursor:grab;"></div>',
+            iconSize: [14, 14],
+            iconAnchor: [7, 7]
+        });
+
+        const currentLocationIcon = L.divIcon({
+            className: 'current-location',
+            html: '<div style="width:20px;height:20px;background:#786044;border:3px solid white;border-radius:50%;box-shadow:0 0 0 6px rgba(182,154,98,0.3);animation:pulse 2s infinite;"></div>',
+            iconSize: [20, 20],
+            iconAnchor: [10, 10]
+        });
+
+        function getPointAtDistance(lat, lng, distanceMeters, bearingDegrees) {
+            const R = 6371000;
+            const bearing = bearingDegrees * Math.PI / 180;
+            const lat1 = lat * Math.PI / 180;
+            const lng1 = lng * Math.PI / 180;
+            const d = distanceMeters;
+            const lat2 = Math.asin(Math.sin(lat1) * Math.cos(d / R) + Math.cos(lat1) * Math.sin(d / R) * Math.cos(bearing));
+            // The denominator uses sin(lat2) — the previous version referenced
+            // `lng2` inside its own initialiser, which is a temporal-dead-zone
+            // ReferenceError. That made every getPointAtDistance() call throw,
+            // so the radius handle and the attendance circle never rendered.
+            const lng2 = lng1 + Math.atan2(
+                Math.sin(bearing) * Math.sin(d / R) * Math.cos(lat1),
+                Math.cos(d / R) - Math.sin(lat1) * Math.sin(lat2)
+            );
+            return [lat2 * 180 / Math.PI, lng2 * 180 / Math.PI];
+        }
+
+        function updateHiddenInputs(lat, lng, radius) {
+            inputLat.value = lat;
+            inputLng.value = lng;
+        }
+
+        function initMarkers(lat, lng, radius) {
+            if (centerMarker) map.removeLayer(centerMarker);
+            if (radiusMarker) map.removeLayer(radiusMarker);
+            if (activeCircle) map.removeLayer(activeCircle);
+
+            centerMarker = L.marker([lat, lng], { draggable: true, icon: centerIcon }).addTo(map);
+            const edgePos = getPointAtDistance(lat, lng, radius, 90);
+            radiusMarker = L.marker(edgePos, { draggable: true, icon: radiusHandleIcon }).addTo(map);
+            activeCircle = L.circle([lat, lng], {
+                radius: radius,
+                color: '#786044',
+                fillColor: '#B69A62',
+                fillOpacity: 0.15,
+                weight: 2
+            }).addTo(map);
+
+            centerMarker.on('drag', function () {
+                const c = centerMarker.getLatLng();
+                const r = parseInt(radiusInput.value) || 100;
+                activeCircle.setLatLng(c);
+                const newEdge = getPointAtDistance(c.lat, c.lng, r, 90);
+                radiusMarker.setLatLng(newEdge);
+                updateHiddenInputs(c.lat, c.lng, r);
+            });
+
+            radiusMarker.on('drag', function () {
+                const c = centerMarker.getLatLng();
+                const e = radiusMarker.getLatLng();
+                const newRadius = Math.max(5, Math.round(c.distanceTo(e)));
+                activeCircle.setRadius(newRadius);
+                radiusInput.value = newRadius;
+                updateHiddenInputs(c.lat, c.lng, newRadius);
+            });
+
+            map.off('click');
+            map.on('click', function (e) {
+                const lat = e.latlng.lat;
+                const lng = e.latlng.lng;
+                const r = parseInt(radiusInput.value) || 100;
+                centerMarker.setLatLng([lat, lng]);
+                activeCircle.setLatLng([lat, lng]);
+                const newEdge = getPointAtDistance(lat, lng, r, 90);
+                radiusMarker.setLatLng(newEdge);
+                updateHiddenInputs(lat, lng, r);
+            });
+        }
+
+        radiusInput.addEventListener('input', function () {
+            let val = parseInt(this.value);
+            if (isNaN(val) || val < 5) val = 5;
+            if (val > 5000) val = 5000;
+            if (centerMarker && radiusMarker && activeCircle) {
+                const c = centerMarker.getLatLng();
+                activeCircle.setRadius(val);
+                const newEdge = getPointAtDistance(c.lat, c.lng, val, 90);
+                radiusMarker.setLatLng(newEdge);
+                updateHiddenInputs(c.lat, c.lng, val);
+            }
+        });
+
+        const searchInput = document.getElementById('locationSearch');
+        const searchResults = document.getElementById('searchResults');
+        let searchTimeout;
+
+        searchInput.addEventListener('input', function () {
+            clearTimeout(searchTimeout);
+            const q = this.value.trim();
+            if (q.length < 3) {
+                searchResults.innerHTML = '';
+                return;
+            }
+            searchTimeout = setTimeout(async () => {
+                try {
+                    const res = await fetch('https://nominatim.openstreetmap.org/search?format=json&q=' + encodeURIComponent(q) + '&limit=5');
+                    const data = await res.json();
+                    renderSearchResults(data);
+                } catch (err) {
+                    console.error(err);
+                }
+            }, 400);
+        });
+
+        function renderSearchResults(results) {
+            searchResults.innerHTML = '';
+            if (!results.length) {
+                searchResults.innerHTML = '<div class="list-group-item text-muted">No results found</div>';
+                return;
+            }
+            results.forEach(r => {
+                const a = document.createElement('a');
+                a.href = '#';
+                a.className = 'list-group-item list-group-item-action';
+                a.textContent = r.display_name;
+                a.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    selectLocation(r);
+                });
+                searchResults.appendChild(a);
+            });
+        }
+
+        function selectLocation(result) {
+            const lat = parseFloat(result.lat);
+            const lon = parseFloat(result.lon);
+            const r = parseInt(radiusInput.value) || 100;
+            map.setView([lat, lon], 19);
+            initMarkers(lat, lon, r);
+            updateHiddenInputs(lat, lon, r);
+            searchResults.innerHTML = '';
+            searchInput.value = result.display_name;
+        }
+
+        document.addEventListener('click', function (e) {
+            if (!e.target.closest('#locationSearch') && !e.target.closest('#searchResults')) {
+                searchResults.innerHTML = '';
+            }
+        });
+
+        // Set once geolocation succeeds. Used as the preferred map centre.
+        let userLocation = null;
+        // True when the server already has a saved site, so we must not
+        // re-centre on the user and lose that view.
+        let hasSavedLocation = false;
+
+        /* Loads the saved attendance location. Deliberately independent of
+           permissions — the map and its radius circle must render whether or
+           not location access was ever granted. */
+        async function loadActive() {
+            try {
+                const res = await fetch('@Url.Action("Active", "Locations")');
+                const data = await res.json();
+
+                if (data.success) {
+                    hasSavedLocation = true;
+                    initMarkers(data.latitude, data.longitude, data.radiusMeters);
+                    radiusInput.value = data.radiusMeters;
+                    map.setView([data.latitude, data.longitude], 19);
+                } else {
+                    // No saved site yet: drop the circle on the user's current
+                    // location when we have it, otherwise on the fallback.
+                    const centre = userLocation || DEFAULT_CENTER;
+                    initMarkers(centre[0], centre[1], 100);
+                    radiusInput.value = 100;
+                    map.setView(centre, userLocation ? 17 : 16);
+                }
+            } catch (e) {
+                console.error('Could not load the saved location:', e);
+                initMarkers(DEFAULT_CENTER[0], DEFAULT_CENTER[1], 100);
+                radiusInput.value = 100;
+            }
+        }
+
+        /* Asks for location purely to place the "You are here" marker.
+           Runs independently and never gates the map itself — the prompt's
+           promise only settles when the user answers it, so awaiting it
+           before rendering is what previously left the map blank. */
+        async function placeCurrentLocation() {
+            let granted = false;
+            if (window.Permissions) {
+                const res = await Permissions.ensure(
+                    'location',
+                    'The map uses your location to show where you are relative to the assigned site.'
+                );
+                granted = !!(res && res.location === true);
+            }
+
+            if (!granted || !navigator.geolocation) return;
+
+            const pos = await new Promise((resolve) => {
+                navigator.geolocation.getCurrentPosition(
+                    (p) => resolve({ lat: p.coords.latitude, lng: p.coords.longitude }),
+                    () => resolve(null),
+                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
+                );
+            });
+
+            if (!pos) return;
+
+            userLocation = [pos.lat, pos.lng];
+
+            if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+            currentLocationMarker = L.marker(userLocation, { icon: currentLocationIcon }).addTo(map);
+            currentLocationMarker.bindPopup('You are here');
+
+            // Geolocation usually resolves after loadActive(), so re-apply the
+            // "centre on the user" rule here as well. If the server has a saved
+            // site, leave that view alone and just add the "You are here" pin.
+            if (hasSavedLocation) return;
+
+            initMarkers(userLocation[0], userLocation[1], 100);
+            radiusInput.value = 100;
+            map.setView(userLocation, 17);
+        }
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            maxZoom: 22
+        }).addTo(map);
+
+        // Paint a usable map immediately on the fallback centre, so Leaflet always
+        // has a view. If geolocation is granted, loadActive()/placeCurrentLocation()
+        // re-centre onto the user's actual position moments later.
+        initMarkers(DEFAULT_CENTER[0], DEFAULT_CENTER[1], 100);
+        radiusInput.value = 100;
+
+        loadActive();
+        placeCurrentLocation();
+    })();
+</script>

@@ -1,0 +1,16 @@
+@model FaceAttendanceSystem.ViewModels.WelcomeBannerViewModel
+
+@*
+    Welcome banner. Uses the Manila City Hall photograph selectively and keeps
+    all copy in dark espresso so it stays readable over the image.
+*@
+<div class="welcome-banner">
+    <div class="welcome-banner-media" aria-hidden="true"></div>
+    <div class="welcome-banner-body">
+        <span class="welcome-banner-eyebrow">
+            <i class="bi bi-buildings"></i> Department of Tourism, Culture and Arts of Manila
+        </span>
+        <h2 class="welcome-banner-title">Welcome back@(string.IsNullOrWhiteSpace(Model.Name) ? "" : ", " + Model.Name)</h2>
+        <p class="welcome-banner-text">@Model.Message</p>
+    </div>
+</div>

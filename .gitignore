@@ -1,0 +1,202 @@
+# ============================================================================
+# FaceAttendanceSystem - Git ignore rules
+# ============================================================================
+
+# ----------------------------------------------------------------------------
+# .NET / C# build output and tooling
+# ----------------------------------------------------------------------------
+/[Bb]in/
+/[Oo]bj/
+/[Dd]ebug/
+/[Rr]elease/
+/artifacts/
+*.user
+*.suo
+*.userosscache
+*.userprefs
+*.sln.docstates
+*.DotSettings.user
+.vs/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+_ReSharper*/
+
+# ----------------------------------------------------------------------------
+# Python virtual environments (face-recognition-api)
+# ----------------------------------------------------------------------------
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+/build/
+/dist/
+face-recognition-api/build/
+face-recognition-api/dist/
+*.egg-info/
+.eggs/
+.installed.cfg
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# ----------------------------------------------------------------------------
+# Node.js
+# ----------------------------------------------------------------------------
+node_modules/
+.npm/
+bower_components/
+.npmrc
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+# ----------------------------------------------------------------------------
+# Secrets, credentials and environment files
+# ----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+*.pfx
+*.p12
+*.key
+*.pem
+*.crt
+*.cer
+*.jks
+*.keystore
+secrets.json
+secrets.yaml
+secrets.yml
+credentials.json
+credentials.yml
+appsettings.Local.json
+appsettings.*.Local.json
+appsettings.Production.Local.json
+*.secret
+*.secrets
+.netrc
+id_rsa
+id_rsa.*
+id_ed25519
+id_ecdsa
+known_hosts
+
+# ----------------------------------------------------------------------------
+# Database dumps, exports and live data
+# Contains real employee, attendance and administrative records.
+# ----------------------------------------------------------------------------
+data_backup_*/
+*_data_backup_*/
+*data-backup*/
+*data_backup*/
+mysql-data-backup-*.zip
+*.sql
+*.sql.gz
+*.dump
+*.ibd
+*.frm
+*.TRN
+*.TRG
+*.MAD
+*.MAI
+ibdata*
+ib_logfile*
+ib_buffer_pool
+aria_log*
+mysql.pid
+*.pid
+db.opt
+
+# ----------------------------------------------------------------------------
+# Biometric / PII runtime data
+# Employee face photos and biometric templates must never be committed.
+# ----------------------------------------------------------------------------
+wwwroot/uploads/*
+!wwwroot/uploads/.gitkeep
+!wwwroot/uploads/employees/
+wwwroot/uploads/employees/*
+!wwwroot/uploads/employees/.gitkeep
+face_encodings*
+*.encodings.json
+face_templates*
+*.face_template
+biometric*
+
+# ----------------------------------------------------------------------------
+# Large binaries that exceed the GitHub 100 MB per-file limit
+# insightface model weights are re-downloaded automatically on first run.
+# ----------------------------------------------------------------------------
+face-recognition-api/models/models/*
+!face-recognition-api/models/models/buffalo_l/
+face-recognition-api/models/models/buffalo_l/*
+!face-recognition-api/models/models/buffalo_l/.gitkeep
+*.onnx
+*.pt
+*.pth
+*.h5
+*.tflite
+buffalo_l.zip
+wwwroot/videos/dashboardbg.mp4
+Views/Images/dashboardbg.mp4
+
+# ----------------------------------------------------------------------------
+# Logs, temporary files and caches
+# ----------------------------------------------------------------------------
+*.log
+*.tmp
+*.temp
+*.bak
+*.orig
+*.rej
+*.cache
+*.pid
+*.seed
+*.lock
+!package-lock.json
+npm-debug.log*
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+.fseventsd
+.AppleDouble
+.LSOverride
+
+# ----------------------------------------------------------------------------
+# Test and coverage output
+# ----------------------------------------------------------------------------
+TestResults/
+*.trx
+*.coverage
+/coverage/
+cypress/
+playwright-report/
+test-results/

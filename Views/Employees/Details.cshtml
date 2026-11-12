@@ -1,0 +1,157 @@
+@model FaceAttendanceSystem.Models.Employee
+
+@{
+    ViewData["Title"] = Model.FullName;
+    var schedules = ViewBag.Schedules as List<FaceAttendanceSystem.Models.Schedule> ?? new List<FaceAttendanceSystem.Models.Schedule>();
+    var attendanceRecords = ViewBag.AttendanceRecords as List<FaceAttendanceSystem.Models.Attendance> ?? new List<FaceAttendanceSystem.Models.Attendance>();
+    var absentRecords = ViewBag.AbsentRecords as List<dynamic> ?? new List<dynamic>();
+
+    string[] DayNames = { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" };
+
+    string GetRepeatDays(string repeatDays)
+    {
+        if (string.IsNullOrWhiteSpace(repeatDays))
+            return "None";
+
+        var days = repeatDays.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(d => {
+                if (int.TryParse(d, out int dayNum) && dayNum >= 0 && dayNum <= 6)
+                    return DayNames[dayNum];
+                return d;
+            });
+
+        return string.Join(", ", days);
+    }
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">@Model.FullName</h1>
+        <p class="page-subtitle">@Model.EmployeeId · @Model.Department</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Index" class="btn btn-outline-primary"><i class="bi bi-arrow-left"></i> Back to Employees</a>
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-primary"><i class="bi bi-pencil"></i> Edit</a>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12 col-lg-6">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-calendar3"></i> Schedules</div>
+            <div class="card-body">
+                @if (schedules.Any())
+                {
+                    <div class="premium-table-wrapper">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Title</th>
+                                    <th scope="col">Time</th>
+                                    <th scope="col">Repeat</th>
+                                    <th scope="col">Days of Repeat</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var schedule in schedules.OrderBy(s => s.Date))
+                                {
+                                    <tr>
+                                        <td>@schedule.Date.ToString("MMM dd, yyyy")</td>
+                                        <td class="fw-semibold">@schedule.Title</td>
+                                        <td>@schedule.StartTime.ToString(@"hh\:mm") - @schedule.EndTime.ToString(@"hh\:mm")</td>
+                                        <td>@schedule.RepeatType</td>
+                                        <td>@GetRepeatDays(schedule.RepeatDays)</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-calendar-x d-block mb-2" style="font-size:1.75rem;color:var(--color-beige);"></i>
+                        <p class="text-muted mb-0">No schedules assigned.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="col-12 col-lg-6">
+        <div class="card mb-3">
+            <div class="card-header"><i class="bi bi-box-arrow-in-right"></i> Log Ins</div>
+            <div class="card-body">
+                @if (attendanceRecords.Any())
+                {
+                    <div class="premium-table-wrapper">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date/Time</th>
+                                    <th scope="col">Schedule</th>
+                                    <th scope="col">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var record in attendanceRecords)
+                                {
+                                    <tr>
+                                        <td>@record.TimeRecorded.ToString("MMM dd, yyyy hh:mm tt")</td>
+                                        <td>@record.Schedule?.Title</td>
+                                        <td><partial name="_StatusBadge" model="@record.Status" /></td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox d-block mb-2" style="font-size:1.75rem;color:var(--color-beige);"></i>
+                        <p class="text-muted mb-0">No log ins recorded.</p>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><i class="bi bi-exclamation-circle"></i> Absents</div>
+            <div class="card-body">
+                @if (absentRecords.Any())
+                {
+                    <div class="premium-table-wrapper">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date</th>
+                                    <th scope="col">Schedule</th>
+                                    <th scope="col">Time</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var absent in absentRecords)
+                                {
+                                    <tr>
+                                        <td>@absent.Date.ToString("MMM dd, yyyy")</td>
+                                        <td>@absent.Schedule.Title</td>
+                                        <td>@absent.StartTime.ToString(@"hh\:mm") - @absent.EndTime.ToString(@"hh\:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-check2-circle d-block mb-2" style="font-size:1.75rem;color:var(--color-beige);"></i>
+                        <p class="text-muted mb-0">No absents recorded.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

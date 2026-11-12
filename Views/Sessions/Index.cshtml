@@ -1,0 +1,78 @@
+@model IEnumerable<FaceAttendanceSystem.Models.AdminSession>
+
+@{
+    ViewData["Title"] = "Active Sessions";
+}
+
+<div class="premium-form-card">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-box-arrow-in-right"></i>
+        </div>
+        <div>
+            <h2>Active Sessions</h2>
+            <p>Monitor and revoke active admin sessions.</p>
+        </div>
+    </div>
+
+    <div class="premium-form-body p-0">
+        <div class="premium-table-wrapper">
+            <table class="table table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Admin</th>
+                        <th scope="col">Session ID</th>
+                        <th scope="col">IP Address</th>
+                        <th scope="col">User Agent</th>
+                        <th scope="col">Created At</th>
+                        <th scope="col">Expires At</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">No active sessions recorded.</td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var session in Model)
+                        {
+                            <tr>
+                                <td class="fw-semibold">@session.Admin?.DisplayName</td>
+                                <td class="font-monospace small">@session.SessionId</td>
+                                <td>@session.IpAddress</td>
+                                <td class="small">@session.UserAgent</td>
+                                <td>@session.CreatedAt.ToString("MMM dd, yyyy hh:mm tt")</td>
+                                <td>@session.ExpiresAt?.ToString("MMM dd, yyyy hh:mm tt")</td>
+                                <td>
+                                    @if (session.IsRevoked)
+                                    {
+                                        <span class="badge bg-secondary"><i class="bi bi-slash-circle"></i>Revoked</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i>Active</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    @if (!session.IsRevoked)
+                                    {
+                                        <form asp-action="Revoke" asp-route-id="@session.Id" method="post" class="d-inline" onsubmit="return confirm('Revoke this session?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-box-arrow-right me-1"></i>Revoke
+                                            </button>
+                                        </form>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

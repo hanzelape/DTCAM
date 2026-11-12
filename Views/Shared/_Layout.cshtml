@@ -1,0 +1,340 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - DTCAM</title>
+    <link rel="icon" href="~/favicon.ico" sizes="any" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="192x192" href="~/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="~/apple-touch-icon.png" />
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/FaceAttendanceSystem.styles.css" asp-append-version="true" />
+</head>
+<body>
+    <a class="skip-link" href="#mainContent">Skip to main content</a>
+    <div class="d-flex">
+        <!-- Left Sidebar -->
+        <aside class="sidebar tower" id="adminSidebar">
+            <!-- Manila City Hall clock tower. Silhouette runs taper -> belfry
+                 clock -> arched shaft -> stepped base -> logo plinth. -->
+            <div class="tower-cap" aria-hidden="true">
+                <svg class="tower-dome" viewBox="0 0 100 70" preserveAspectRatio="none" aria-hidden="true" focusable="false">
+                    <defs>
+                        <linearGradient id="dome-left" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#D46A65" />
+                            <stop offset="100%" stop-color="#A53836" />
+                        </linearGradient>
+                        <linearGradient id="dome-right" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#9E2B2E" />
+                            <stop offset="100%" stop-color="#6B191C" />
+                        </linearGradient>
+                    </defs>
+                    <!-- Cornice trim where dome meets tower body -->
+                    <path class="tower-dome-cornice" d="M 0 70 Q 50 69 100 70" />
+                    <!-- Left dome face (lit warm terracotta) -->
+                    <path class="tower-dome-face left" d="M 0 70 C 0 28, 28 6, 50 13 L 50 70 Z" />
+                    <!-- Right dome face (shaded deep brick) -->
+                    <path class="tower-dome-face right" d="M 100 70 C 100 28, 72 6, 50 13 L 50 70 Z" />
+                    <!-- Center hip seam -->
+                    <path class="tower-dome-seam" d="M 50 70 Q 50 36 50 13" />
+                    <!-- Left panel seam -->
+                    <path class="tower-dome-seam" d="M 22 70 Q 28 50 38 18" />
+                    <!-- Right panel seam -->
+                    <path class="tower-dome-seam" d="M 78 70 Q 72 50 62 18" />
+                    <!-- Left highlight for dimensional lighting -->
+                    <path class="tower-dome-highlight" d="M 6 70 C 6 34, 26 10, 48 15 L 44 26 Q 30 46 14 64 Z" />
+                    <!-- Right shadow for dimensional depth -->
+                    <path class="tower-dome-shadow" d="M 94 70 C 94 34, 74 10, 52 15 L 56 26 Q 70 46 86 64 Z" />
+                    <!-- Raised central drum -->
+                    <rect class="tower-dome-drum" x="43" y="9" width="14" height="6" rx="2" ry="2" />
+                    <rect class="tower-dome-drum-band" x="43" y="14" width="14" height="1" />
+                    <!-- Thin vertical spire -->
+                    <rect class="tower-dome-spire" x="49.5" y="4" width="1" height="5" />
+                    <rect class="tower-dome-spire-tip" x="49" y="3" width="2" height="1" />
+                </svg>
+            </div>
+
+            <!-- Working clock face, driven by the Asia/Manila timezone -->
+            <div class="tower-clock" aria-hidden="true">
+                <svg class="tower-clock-svg" viewBox="0 0 100 100" role="img" aria-label="Manila clock">
+                    <circle class="tower-clock-dial" cx="50" cy="50" r="47" />
+                    <circle class="tower-clock-bezel" cx="50" cy="50" r="47" />
+                    <text class="tower-clock-numeral" x="50" y="20" text-anchor="middle" dominant-baseline="middle">XII</text>
+                    <text class="tower-clock-numeral" x="65" y="24" text-anchor="middle" dominant-baseline="middle">I</text>
+                    <text class="tower-clock-numeral" x="76" y="35" text-anchor="middle" dominant-baseline="middle">II</text>
+                    <text class="tower-clock-numeral" x="80" y="50" text-anchor="middle" dominant-baseline="middle">III</text>
+                    <text class="tower-clock-numeral" x="76" y="65" text-anchor="middle" dominant-baseline="middle">IV</text>
+                    <text class="tower-clock-numeral" x="65" y="76" text-anchor="middle" dominant-baseline="middle">V</text>
+                    <text class="tower-clock-numeral" x="50" y="80" text-anchor="middle" dominant-baseline="middle">VI</text>
+                    <text class="tower-clock-numeral" x="35" y="76" text-anchor="middle" dominant-baseline="middle">VII</text>
+                    <text class="tower-clock-numeral" x="24" y="65" text-anchor="middle" dominant-baseline="middle">VIII</text>
+                    <text class="tower-clock-numeral" x="20" y="50" text-anchor="middle" dominant-baseline="middle">IX</text>
+                    <text class="tower-clock-numeral" x="24" y="35" text-anchor="middle" dominant-baseline="middle">X</text>
+                    <text class="tower-clock-numeral" x="35" y="24" text-anchor="middle" dominant-baseline="middle">XI</text>
+                    <line class="tower-clock-tick" x1="50" y1="6" x2="50" y2="12" />
+                    <line class="tower-clock-tick" x1="74" y1="10" x2="71" y2="15" />
+                    <line class="tower-clock-tick" x1="90" y1="26" x2="84" y2="28" />
+                    <line class="tower-clock-tick" x1="94" y1="50" x2="88" y2="50" />
+                    <line class="tower-clock-tick" x1="90" y1="74" x2="84" y2="72" />
+                    <line class="tower-clock-tick" x1="74" y1="90" x2="71" y2="85" />
+                    <line class="tower-clock-tick" x1="50" y1="94" x2="50" y2="88" />
+                    <line class="tower-clock-tick" x1="26" y1="90" x2="29" y2="85" />
+                    <line class="tower-clock-tick" x1="10" y1="74" x2="16" y2="72" />
+                    <line class="tower-clock-tick" x1="6" y1="50" x2="12" y2="50" />
+                    <line class="tower-clock-tick" x1="10" y1="26" x2="16" y2="28" />
+                    <line class="tower-clock-tick" x1="26" y1="10" x2="29" y2="15" />
+                    <g class="tower-clock-hands">
+                        <line class="tower-clock-hand tower-clock-hand-hour" x1="50" y1="50" x2="50" y2="68" />
+                        <line class="tower-clock-hand tower-clock-hand-minute" x1="50" y1="50" x2="50" y2="30" />
+                        <line class="tower-clock-hand tower-clock-hand-second" x1="50" y1="50" x2="50" y2="18" />
+                    </g>
+                    <circle class="tower-clock-pin" cx="50" cy="50" r="4" />
+                </svg>
+                <div class="tower-clock-plaque">Manila</div>
+            </div>
+
+            <div class="tower-niche-list" role="presentation">
+                <nav class="sidebar-nav" aria-label="Main navigation" data-stagger="sidebar">
+                <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Home" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Home" asp-action="Index">
+                    <i class="bi bi-speedometer2"></i> <span class="sidebar-text">Dashboard</span>
+                </a>
+                <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Attendance" && ViewContext.RouteData.Values["action"]?.ToString() == "CheckIn" ? "active" : "")" asp-controller="Attendance" asp-action="CheckIn">
+                    <i class="bi bi-camera"></i> <span class="sidebar-text">Start Facial Recognition</span>
+                </a>
+                <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Employees" ? "active" : "")" asp-controller="Employees" asp-action="Index">
+                    <i class="bi bi-people"></i> <span class="sidebar-text">Employees</span>
+                </a>
+                <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Schedules" && ViewContext.RouteData.Values["action"]?.ToString() == "Index" ? "active" : "")" asp-controller="Schedules" asp-action="Index">
+                    <i class="bi bi-calendar3"></i> <span class="sidebar-text">Schedules</span>
+                </a>
+                <a class="sidebar-link @(ViewContext.RouteData.Values["controller"]?.ToString() == "Schedules" && ViewContext.RouteData.Values["action"]?.ToString() == "Assignments" ? "active" : "")" asp-controller="Schedules" asp-action="Assignments">
+                    <i class="bi bi-diagram-3"></i> <span class="sidebar-text">Schedule Assignments</span>
+                </a>
+                <a class="sidebar-link" style="display:none;" asp-controller="Departments" asp-action="Index">
+                    <i class="bi bi-building"></i> <span class="sidebar-text">Departments</span>
+                </a>
+                </nav>
+                <div class="tower-base"></div>
+            </div>
+
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <div class="main-content flex-grow-1" id="adminMainContent">
+            <div class="dashboard-image-background"></div>
+            <div class="dashboard-video-overlay"></div>
+            <div class="ambient-layer" aria-hidden="true">
+                <div class="ambient-orb ambient-orb-crimson ambient-orb-2"></div>
+                <div class="ambient-orb ambient-orb-gold ambient-orb-3"></div>
+                <div class="ambient-orb ambient-orb-sky ambient-orb-5"></div>
+            </div>
+            <div class="sidebar-backdrop" id="adminSidebarBackdrop"></div>
+
+            <!-- Institutional header -->
+            <header class="top-navbar">
+                <div class="top-navbar-inner">
+                    <div class="top-navbar-identity">
+                        <button class="sidebar-mobile-toggler" id="sidebarMobileToggler" type="button" aria-label="Open sidebar" aria-expanded="false" aria-controls="adminSidebar">
+                            <i class="bi bi-list"></i>
+                        </button>
+                        <img src="~/images/manilalogo-header.png" alt="" class="top-navbar-seal" />
+                        <div>
+                            <span class="top-navbar-dept">Department of Tourism, Culture and Arts of Manila</span>
+                            <span class="top-navbar-sub">Facial Recognition System</span>
+                        </div>
+                    </div>
+                    <div class="top-navbar-right">
+
+                        @if (User.Identity?.IsAuthenticated == true)
+                        {
+                            <div class="dropdown">
+                                <button class="btn dropdown-toggle admin-dropdown-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="bi bi-person-circle me-1"></i>Administrator
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" asp-controller="Locations" asp-action="Index"><i class="bi bi-geo-alt me-2"></i>Location</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" asp-controller="Sessions" asp-action="Index"><i class="bi bi-box-arrow-in-right me-2"></i>Sessions</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li><a class="dropdown-item" asp-controller="Home" asp-action="Privacy"><i class="bi bi-shield-lock me-2"></i>Privacy</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post" class="d-inline">
+                                            <button type="submit" class="dropdown-item"><i class="bi bi-box-arrow-right me-2"></i>Logout</button>
+                                        </form>
+                                    </li>
+                                </ul>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </header>
+
+            <main role="main" id="mainContent" class="pb-3">
+                @RenderBody()
+            </main>
+        </div>
+    </div>
+
+    <partial name="_CameraPermissionPrompt" />
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/permissions.js" asp-append-version="true"></script>
+    <script>
+        // Once per login session, offer camera + location access.
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.Permissions) Permissions.promptOnLoad();
+        });
+    </script>
+    <script>
+        /* Manila City Hall clock tower face. Runs off Asia/Manila so the
+           hands show city time regardless of the viewer's own timezone.
+           SVG-based: each hand is a <line> rotated about the dial centre.
+           requestAnimationFrame drives the sweep; every frame recomputes
+           from the real clock so the hands cannot drift even while the
+           tab is backgrounded. */
+        (function () {
+            var svg = document.querySelector('.tower-clock-svg');
+            if (!svg) return;
+
+            var hands = svg.querySelector('.tower-clock-hands');
+            var hourLine = svg.querySelector('.tower-clock-hand-hour');
+            var minuteLine = svg.querySelector('.tower-clock-hand-minute');
+            var secondLine = svg.querySelector('.tower-clock-hand-second');
+            if (!hands || !hourLine || !minuteLine || !secondLine) return;
+
+            function manilaNow() {
+                return new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Manila' }));
+            }
+
+            function setRotation(line, deg) {
+                line.setAttribute('transform', 'rotate(' + deg + ' 50 50)');
+            }
+
+            function draw() {
+                var now = manilaNow();
+                var s = now.getSeconds() + now.getMilliseconds() / 1000;
+                var m = now.getMinutes() + s / 60;
+                var h = (now.getHours() % 12) + m / 60;
+
+                setRotation(secondLine, s * 6);
+                setRotation(minuteLine, m * 6);
+                setRotation(hourLine, h * 30);
+            }
+
+            draw();
+            /* Smooth sweep: run every frame, but only recompute the second
+               hand's sub-degree position from real time so the motion is
+               fluid without drifting away from the actual clock. */
+            var raf = null;
+            function loop() {
+                draw();
+                raf = requestAnimationFrame(loop);
+            }
+            loop();
+
+            /* Pause the loop when the tab is hidden to save resources; the
+               next visibilitychange resumes it and draw() recomputes from
+               the real time, so no accuracy is lost. */
+            document.addEventListener('visibilitychange', function () {
+                if (document.hidden) {
+                    if (raf) { cancelAnimationFrame(raf); raf = null; }
+                } else if (!raf) {
+                    loop();
+                }
+            });
+        })();
+    </script>
+    <script>
+        (function () {
+            const sidebar = document.getElementById('adminSidebar');
+            const mainContent = document.getElementById('adminMainContent');
+            const toggler = document.getElementById('sidebarToggler');
+            const mobileToggler = document.getElementById('sidebarMobileToggler');
+            const backdrop = document.getElementById('adminSidebarBackdrop');
+            if (!sidebar || !mainContent || (!toggler && !mobileToggler)) return;
+
+            const STORAGE_KEY = 'adminSidebarCollapsed';
+
+            function applyState(collapsed) {
+                sidebar.classList.toggle('collapsed', collapsed);
+                mainContent.classList.toggle('sidebar-collapsed', collapsed);
+            }
+
+            function saveState(collapsed) {
+                try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch (e) {}
+            }
+
+            function loadState() {
+                try { return localStorage.getItem(STORAGE_KEY) === '1'; } catch (e) { return false; }
+            }
+
+            function isMobile() {
+                return window.innerWidth <= 768;
+            }
+
+            function closeMobileSidebar() {
+                sidebar.classList.remove('show');
+                if (mobileToggler) mobileToggler.setAttribute('aria-expanded', 'false');
+                if (backdrop) backdrop.classList.remove('show');
+            }
+
+            function openMobileSidebar() {
+                sidebar.classList.add('show');
+                if (mobileToggler) mobileToggler.setAttribute('aria-expanded', 'true');
+                if (backdrop) backdrop.classList.add('show');
+            }
+
+            if (!isMobile()) applyState(loadState());
+
+            function handleTogglerClick() {
+                if (isMobile()) {
+                    if (sidebar.classList.contains('show')) {
+                        closeMobileSidebar();
+                    } else {
+                        openMobileSidebar();
+                    }
+                } else {
+                    const willCollapse = !sidebar.classList.contains('collapsed');
+                    applyState(willCollapse);
+                    saveState(willCollapse);
+                }
+            }
+
+            if (toggler) {
+                toggler.addEventListener('click', handleTogglerClick);
+            }
+            if (mobileToggler) {
+                mobileToggler.addEventListener('click', handleTogglerClick);
+            }
+
+            if (backdrop) {
+                backdrop.addEventListener('click', closeMobileSidebar);
+            }
+
+            document.addEventListener('keydown', function (e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('show')) {
+                    closeMobileSidebar();
+                    if (mobileToggler) mobileToggler.focus();
+                }
+            });
+
+            window.addEventListener('resize', function () {
+                if (window.innerWidth > 768) {
+                    closeMobileSidebar();
+                }
+            });
+        })();
+    </script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

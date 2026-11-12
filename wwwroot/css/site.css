@@ -1,0 +1,5305 @@
+﻿/* ============================================================
+   DTCAM â€” Manila Heritage Glassmorphism Design System
+   Department of Tourism, Culture and Arts of Manila (DTCAM)
+   Visual identity derived from Manila City Hall's neoclassical
+   architecture: warm ivory, architectural beige, heritage gold,
+   antique bronze, dark espresso.
+   ============================================================ */
+
+/* ============================================================
+   1. DESIGN TOKENS
+   ============================================================ */
+:root {
+  /* ==========================================================
+     Heritage palette â€” Manila City Hall architecture
+     Sky Blue + Beige + Gold + Red, over Dark Espresso text
+     ========================================================== */
+  --color-sky: #2E9BD6;            /* Sky Blue â€” interactive accent */
+  --color-sky-deep: #15679E;       /* Sky Blue, text/icon safe on light */
+  --color-sky-soft: rgba(46, 155, 214, 0.12);
+  --color-sky-ring: rgba(46, 155, 214, 0.26);
+
+  --color-beige: #D8C5A5;          /* Architectural Beige â€” secondary surfaces */
+  --color-beige-soft: rgba(216, 197, 165, 0.32);
+  --color-beige-tint: #F0E7D7;     /* Beige wash for headers and rails */
+
+  --color-gold: #B69A62;           /* Heritage Gold â€” decorative accents */
+  --color-gold-soft: rgba(182, 154, 98, 0.14);
+
+  --color-red: #C44545;            /* City Red â€” emphasis and destructive */
+  --color-red-deep: #93302F;       /* City Red, text safe on light */
+  --color-red-soft: rgba(196, 69, 69, 0.10);
+
+  /* Deep Crimson â€” the premium signature tone. Darker and less orange than
+     City Red so it reads as lacquered metal rather than an alert colour. */
+  --color-crimson: #9E2B2E;
+  --color-crimson-deep: #7A1F22;   /* hover / text safe on light */
+  --color-crimson-ink: #6B191C;    /* accessible text on light surfaces */
+  --color-crimson-soft: rgba(158, 43, 46, 0.10);
+  --color-crimson-ring: rgba(158, 43, 46, 0.26);
+  --color-crimson-lift: rgba(158, 43, 46, 0.16);
+
+  --color-bronze: #786044;         /* Antique Bronze â€” secondary neutral */
+  --color-espresso: #493C2C;       /* Dark Espresso â€” main text */
+  --color-ivory: #F5F0E7;          /* Warm Ivory â€” main background */
+
+  /* --- Role tokens (consumed by every component) ---
+     Crimson now leads interaction, Gold decorates, Sky Blue carries
+     information only, Espresso carries the text. */
+  --color-primary: var(--color-crimson);
+  --color-primary-hover: var(--color-crimson-deep);
+  --color-primary-soft: var(--color-crimson-soft);
+  --color-primary-ring: var(--color-crimson-ring);
+
+  --color-secondary: var(--color-gold);
+  --color-accent: var(--color-gold);
+  --color-accent-soft: var(--color-gold-soft);
+
+  --color-text: var(--color-espresso);
+  --color-text-secondary: #6B5B4A;
+  --color-text-muted: #776A5C;
+
+  --color-bg: var(--color-ivory);
+  --color-surface: #FFFFFF;
+  --color-surface-alt: #FBF8F2;
+  --color-border: #E5D9C8;
+  --color-border-hover: #D8C5A5;
+
+  /* --- Functional status: soft fills use the tone, text uses the ink --- */
+  --color-success: #2E7D5B;
+  --color-success-ink: #22654A;
+  --color-success-soft: rgba(46, 125, 91, 0.10);
+
+  --color-warning: #C58B32;
+  --color-warning-ink: #7E551A;
+  --color-warning-soft: rgba(197, 139, 50, 0.14);
+
+  --color-danger: var(--color-red);
+  --color-danger-ink: var(--color-red-deep);
+  --color-danger-soft: var(--color-red-soft);
+
+  /* Info sits in the Beige/Bronze family so it never competes with Sky Blue */
+  --color-info: #8A6F4E;
+  --color-info-ink: #6A5335;
+  --color-info-soft: rgba(138, 111, 78, 0.10);
+
+  /* --- Sidebar: beige glass, espresso text, sky active state --- */
+  --color-sidebar: rgba(243, 236, 225, 0.90);
+  --color-sidebar-hover: rgba(158, 43, 46, 0.08);
+  --color-sidebar-active: rgba(158, 43, 46, 0.13);
+  --color-sidebar-text: #5E5142;
+  --color-sidebar-text-active: var(--color-espresso);
+  --color-sidebar-border: rgba(216, 197, 165, 0.85);
+
+  /* --- Accent rule: Crimson â†’ Gold, the project's signature --- */
+  --accent-rule: linear-gradient(90deg,
+    var(--color-crimson) 0%,
+    var(--color-red) 45%,
+    var(--color-gold) 100%);
+
+  /* --- Premium gold hairline for card edges --- */
+  --gold-hairline: rgba(182, 154, 98, 0.42);
+  --gold-sheen: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0) 55%);
+
+  /* --- Glassmorphism ---
+     Strong variant is used for cards, tables and any surface carrying data:
+     with the City Hall photograph at full strength behind the shell, glass
+     has to stay near-opaque to keep text legible. */
+  --glass-bg: rgba(255, 255, 255, 0.72);
+  --glass-bg-strong: rgba(255, 255, 255, 0.93);
+  --glass-border: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 8px 32px rgba(73, 60, 44, 0.08);
+
+  /* --- Textured glass ---
+     Real glass has three layers, not one flat fill: a translucent body,
+     a specular highlight along the lit edge, and a faint grain that stops
+     large panels looking like plain plastic. `--glass-grain` is an inline
+     SVG turbulence so it costs no extra request and tiles seamlessly.
+     Kept at very low opacity â€” it should read as material, not as noise. */
+  --glass-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.42'/%3E%3C/svg%3E");
+  --glass-grain-opacity: 0.05;
+
+  /* Specular edge: bright at the top where light lands, fading downward.
+     This is what separates a convincing glass panel from a grey box. */
+  --glass-specular: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.85) 0%,
+    rgba(255, 255, 255, 0.28) 18%,
+    rgba(255, 255, 255, 0) 46%);
+  --glass-specular-side: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.55) 0%,
+    rgba(255, 255, 255, 0.06) 14%,
+    rgba(255, 255, 255, 0) 40%);
+
+  /* Inner light line â€” a 1px inset rim that reads as thickness */
+  --glass-rim: inset 0 1px 0 rgba(255, 255, 255, 0.72),
+               inset 0 -1px 0 rgba(73, 60, 44, 0.05);
+  --glass-rim-strong: inset 0 1px 0 rgba(255, 255, 255, 0.9),
+                      inset 0 0 0 1px rgba(255, 255, 255, 0.16);
+
+  /* --- Radius (larger, softer â€” modern) --- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-2xl: 26px;
+  --radius-card: 20px;
+  --radius-button: 12px;
+
+  /* --- Shadows: low-contrast, layered, warm without going brown --- */
+  --shadow-sm: 0 1px 2px rgba(73, 60, 44, 0.04);
+  --shadow-md: 0 1px 2px rgba(73, 60, 44, 0.04), 0 4px 12px rgba(73, 60, 44, 0.05);
+  --shadow-lg: 0 2px 4px rgba(73, 60, 44, 0.04), 0 12px 28px rgba(73, 60, 44, 0.08);
+  --shadow-xl: 0 4px 8px rgba(73, 60, 44, 0.05), 0 24px 56px rgba(73, 60, 44, 0.12);
+
+  /* Premium elevation: a crimson-tinted contact shadow under a gold hairline.
+     The tint is subtle enough to stay neutral at rest but gives cards a
+     lacquered, lit-from-above feel on hover. */
+  --shadow-premium: 0 1px 2px rgba(73, 60, 44, 0.05),
+                    0 10px 26px rgba(122, 31, 34, 0.07);
+  --shadow-premium-lg: 0 2px 4px rgba(73, 60, 44, 0.05),
+                       0 22px 50px rgba(122, 31, 34, 0.12);
+  --shadow-crimson: 0 2px 6px rgba(122, 31, 34, 0.22),
+                    0 10px 24px rgba(122, 31, 34, 0.18);
+  --shadow-focus: 0 0 0 3px var(--color-primary-ring);
+  --shadow-soft: var(--glass-shadow);
+
+  /* --- Ambient orbs ---------------------------------------------
+   Soft crimson/gold spheres drifting behind the content. Purely
+   decorative: `pointer-events: none` everywhere so they can never
+   intercept a click, and they sit below all real UI in z-order. */
+.ambient-orb {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+  filter: blur(42px);
+}
+
+.ambient-orb-crimson {
+  background: radial-gradient(circle at 32% 30%,
+    rgba(158, 43, 46, 0.30) 0%,
+    rgba(158, 43, 46, 0.10) 55%,
+    rgba(158, 43, 46, 0) 72%);
+}
+
+.ambient-orb-gold {
+  background: radial-gradient(circle at 34% 32%,
+    rgba(182, 154, 98, 0.34) 0%,
+    rgba(182, 154, 98, 0.11) 55%,
+    rgba(182, 154, 98, 0) 72%);
+}
+
+.ambient-orb-sky {
+  background: radial-gradient(circle at 34% 32%,
+    rgba(46, 155, 214, 0.20) 0%,
+    rgba(46, 155, 214, 0.07) 55%,
+    rgba(46, 155, 214, 0) 72%);
+}
+
+/* Layer that holds the orbs. Clipped to its parent so nothing
+   bleeds into the scrollbar or off-screen.
+   Negative so real content paints above it without any content
+   element needing a z-index â€” see the note on .main-content.
+
+   Fixed to the viewport for the same reason as the photo and wash above: the
+   orbs tint the header's backdrop, so the roof band needs them too or the two
+   bands differ in hue. Fixed rather than left absolute so the orbs no longer
+   slide with scroll â€” the header does not scroll either, and a drifting tint
+   behind a sticky band is what made the mismatch visible. */
+.ambient-layer {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: -2;
+}
+
+/* Drifting keyframes. Three separate timings keep the group from
+   ever falling into visible sync. */
+@keyframes driftA {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  33%  { transform: translate3d(38px, -26px, 0) scale(1.06); }
+  66%  { transform: translate3d(-22px, 18px, 0) scale(0.96); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+
+@keyframes driftB {
+  0%   { transform: translate3d(0, 0, 0) scale(1.02); }
+  40%  { transform: translate3d(-46px, 30px, 0) scale(0.94); }
+  75%  { transform: translate3d(26px, -20px, 0) scale(1.08); }
+  100% { transform: translate3d(0, 0, 0) scale(1.02); }
+}
+
+@keyframes driftC {
+  0%   { transform: translate3d(0, 0, 0) scale(0.98); }
+  50%  { transform: translate3d(30px, 34px, 0) scale(1.05); }
+  100% { transform: translate3d(0, 0, 0) scale(0.98); }
+}
+
+.ambient-orb-1 { width: 340px; height: 340px; top: 4%;  left: -60px;  animation: driftA 26s ease-in-out infinite; }
+.ambient-orb-2 { width: 260px; height: 260px; bottom: 6%; left: 18%; animation: driftB 32s ease-in-out infinite; }
+.ambient-orb-3 { width: 300px; height: 300px; top: 18%; right: 8%;  animation: driftC 29s ease-in-out infinite; }
+.ambient-orb-4 { width: 220px; height: 220px; bottom: 14%; right: 22%; animation: driftA 36s ease-in-out infinite reverse; }
+.ambient-orb-5 { width: 180px; height: 180px; top: 46%; left: 42%;  animation: driftB 40s ease-in-out infinite; }
+
+/* --- Per-status tints for the light statistic tiles --- */
+  --tint-primary: rgba(158, 43, 46, 0.10);
+  --tint-success: rgba(46, 125, 91, 0.09);
+  --tint-warning: rgba(197, 139, 50, 0.13);
+  --tint-danger: rgba(196, 69, 69, 0.09);
+  --tint-info: rgba(138, 111, 78, 0.09);
+
+  /* --- Motion --- */
+  --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-base: 220ms cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* --- Layout ---
+     The sidebar is the tower's shaft. 264px keeps the shaft in proportion to
+     the 84px dial and the 68px cap above it â€” at the old 300px the shaft read
+     squat and the clock looked undersized. Also drives .main-content's
+     margin-left, so the content tracks the narrower tower automatically. */
+  --sidebar-width: 264px;
+  --sidebar-collapsed-width: 84px;
+  --header-height: 68px;
+
+  /* --- Typography scale --- */
+  --font-size-page: 28px;
+  --font-size-section: 20px;
+  --font-size-card: 16px;
+  --font-size-body: 14px;
+  --font-size-support: 12px;
+}
+
+/* ============================================================
+   2. FOUNDATIONS â€” Typography & Global Reset
+   ============================================================ */
+html {
+  font-size: 14px;
+  position: relative;
+  min-height: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (min-width: 768px) {
+  html { font-size: 16px; }
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 400;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-size: var(--font-size-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: -0.01em;
+}
+
+h1, .h1 { font-size: var(--font-size-page); font-weight: 600; }
+h2, .h2 { font-size: var(--font-size-section); font-weight: 600; }
+h3, .h3, .card-title { font-size: var(--font-size-card); font-weight: 600; }
+h4, .h4 { font-size: 15px; font-weight: 600; }
+h5, .h5 { font-size: 14px; font-weight: 600; }
+h6, .h6 { font-size: var(--font-size-support); font-weight: 600; }
+
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: color var(--transition-fast);
+}
+
+a:hover,
+a:focus {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
+
+code {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+  border-radius: var(--radius-sm);
+  padding: 0.1rem 0.35rem;
+  font-size: 0.875em;
+}
+
+/* --- Visible keyboard focus everywhere --- */
+:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+
+.btn:focus,
+.btn:focus-visible,
+.form-control:focus,
+.form-select:focus,
+.form-check-input:focus,
+.btn-link.nav-link:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+}
+
+.btn:focus-visible,
+.form-control:focus-visible,
+.form-select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}
+
+/* --- Text & alignment utilities --- */
+.text-muted { color: var(--color-text-muted) !important; }
+.text-secondary { color: var(--color-text-secondary) !important; }
+.text-dark { color: var(--color-text) !important; }
+.text-white { color: #FFFFFF !important; }
+.text-end { text-align: right !important; }
+.text-center { text-align: center !important; }
+.text-nowrap { white-space: nowrap !important; }
+.min-w-0 { min-width: 0 !important; }
+
+.shadow-sm { box-shadow: var(--shadow-sm) !important; }
+
+.gap-2 { gap: 0.5rem !important; }
+.gap-3 { gap: 1rem !important; }
+
+.fw-semibold { font-weight: 600 !important; }
+.fw-bold { font-weight: 700 !important; }
+.font-monospace { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important; }
+
+.small, small { font-size: var(--font-size-support) !important; }
+.text-wrap { white-space: normal !important; }
+
+.border-top { border-top: 1px solid var(--color-border) !important; }
+.border-0 { border: 0 !important; }
+
+/* Utility classes referenced by views but not provided by Bootstrap */
+.opacity-0.5 { opacity: 0.5; }
+.cursor-not-allowed { cursor: not-allowed; }
+
+/* Visually hidden â€” available for labels that must not be seen */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Keyboard users can jump straight past the sidebar */
+.skip-link {
+  position: absolute;
+  top: -60px;
+  left: 1rem;
+  z-index: 2000;
+  padding: 0.6rem 1rem;
+  background: var(--color-primary);
+  color: #FFFFFF;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  font-weight: 600;
+  font-size: 13px;
+  text-decoration: none;
+  transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+  top: 0;
+  color: #FFFFFF;
+  text-decoration: none;
+}
+
+hr {
+  border-color: var(--color-border);
+  opacity: 1;
+}
+
+/* ============================================================
+   3. GLASS SYSTEM
+   Three stacked layers give the material: ::before paints the specular
+   highlight and grain, ::after paints the edge sheen, and the element's
+   own background stays translucent. Both pseudo-elements are inert and
+   sit behind content via z-index, so panels remain clickable.
+   ============================================================ */
+.glass,
+.glass-panel,
+.glass-sm {
+  position: relative;
+  isolation: isolate;
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+}
+
+.glass::before,
+.glass-panel::before,
+.glass-sm::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--glass-specular), var(--glass-grain);
+  background-blend-mode: normal, overlay;
+  opacity: 1;
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Grain alone, kept faint so it reads as texture rather than noise */
+.glass::before,
+.glass-panel::before,
+.glass-sm::before {
+  background-size: auto, 140px 140px;
+}
+
+.glass::after,
+.glass-panel::after,
+.glass-sm::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--glass-specular-side);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.glass,
+.glass-panel {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-soft), var(--glass-rim);
+}
+
+.glass-sm {
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm), var(--glass-rim);
+  backdrop-filter: blur(12px) saturate(130%);
+  -webkit-backdrop-filter: blur(12px) saturate(130%);
+}
+
+/* Graceful fallback for browsers without backdrop-filter */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass,
+  .glass-panel,
+  .glass-sm,
+  .sidebar,
+  .top-navbar,
+  .tower-cap,
+  .card,
+  .premium-form-card,
+  .premium-section-card {
+    background: var(--color-surface);
+  }
+  /* Without blur the grain has nothing to sit on, so drop the decorative
+     layers rather than leaving speckle over flat white. */
+  .glass::before,
+  .glass-panel::before,
+  .glass-sm::before,
+  .glass::after,
+  .glass-panel::after,
+  .glass-sm::after,
+  .card::before,
+  .card::after,
+  .premium-form-card::before,
+  .premium-form-card::after,
+  .premium-section-card::before,
+  .login-card::after,
+  .glass-grain-layer {
+    background-image: none;
+  }
+  .login-card {
+    background: rgba(255, 255, 255, 0.96);
+  }
+}
+
+/* ============================================================
+   4. APPLICATION HEADER
+   ============================================================ */
+.top-navbar {
+  height: var(--header-height);
+  display: flex;
+  align-items: center;
+  padding: 0 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 999;
+}
+
+/* The glass backdrop itself is shared with the tower's roof band, so the roof
+   sits on exactly the same surface the navigation header does â€” same translucent
+   fill, same blur, same bottom hairline. Declared once, applied to both, so the
+   two can never drift apart again. */
+.top-navbar,
+.tower-cap {
+  background: rgba(255, 255, 255, 0.80);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border-bottom: 1px solid var(--color-border);
+}
+
+/* Accent rule: Sky Blue â†’ Gold â†’ Red.
+   Header only: on the tower this edge is occupied end to end by the copper
+   roof's eaves, so a rule here would sit under the roof and never be seen. */
+.top-navbar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg,
+    rgba(46, 155, 214, 0.85) 0%,
+    rgba(182, 154, 98, 0.85) 48%,
+    rgba(196, 69, 69, 0.75) 78%,
+    rgba(196, 69, 69, 0) 100%);
+}
+
+.top-navbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  width: 100%;
+  min-width: 0;
+}
+
+.top-navbar-identity {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+/* City of Manila seal, ahead of the department identification in the header.
+   The source is very nearly square (10494x10309), so object-fit keeps it from
+   being stretched by the fixed box. Sized from the 256px asset, which is ample
+   for a 34px slot even on a 2x display. */
+.top-navbar-seal {
+  width: 34px;
+  height: 34px;
+  flex-shrink: 0;
+  object-fit: contain;
+  border-radius: 50%;
+  /* A faint gold ring, matching the header's own hairline, so the seal reads
+     as a stamped mark rather than a loose image dropped into the bar. */
+  box-shadow:
+    0 0 0 1px var(--gold-hairline),
+    0 1px 3px rgba(73, 60, 44, 0.18);
+}
+
+/* Full department name â€” prominent institutional identification */
+.top-navbar-dept {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-navbar-sub {
+  display: block;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.top-navbar-right {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex-shrink: 0;
+}
+
+/* DTCAM â€” compact identification in the navigation area */
+.top-navbar-abbr {
+  display: inline-flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 0.6rem;
+  border: 1px solid rgba(46, 155, 214, 0.4);
+  border-radius: 999px;
+  background: var(--color-sky-soft);
+  color: var(--color-sky-deep);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+}
+
+.admin-dropdown-btn {
+  background: transparent !important;
+  border: 1px solid var(--color-border) !important;
+  color: var(--color-text) !important;
+  font-weight: 600;
+  padding: 0.45rem 0.9rem;
+  border-radius: 999px;
+  transition: all var(--transition-fast);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.admin-dropdown-btn:hover,
+.admin-dropdown-btn:focus {
+  background: var(--color-primary-soft) !important;
+  border-color: var(--color-gold) !important;
+  color: var(--color-primary-hover) !important;
+}
+
+.admin-dropdown-btn::after {
+  margin-left: 0.35rem;
+}
+
+.top-navbar-right .dropdown-menu {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  padding: 0.4rem;
+  min-width: 220px;
+}
+
+.top-navbar-right .dropdown-item {
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 0.75rem;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  transition: all var(--transition-fast);
+}
+
+.top-navbar-right .dropdown-item:hover,
+.top-navbar-right .dropdown-item:focus {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}
+
+.top-navbar-right .dropdown-item i {
+  color: var(--color-gold);
+}
+
+.top-navbar-right .dropdown-divider {
+  border-color: var(--color-border);
+  margin: 0.35rem 0;
+}
+
+/* ============================================================
+   5. SIDEBAR
+   ============================================================ */
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: var(--sidebar-width);
+  background: var(--color-sidebar);
+  backdrop-filter: blur(24px) saturate(140%);
+  -webkit-backdrop-filter: blur(24px) saturate(140%);
+  border-right: 1px solid var(--color-sidebar-border);
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  color: var(--color-sidebar-text);
+  transition: width var(--transition-base), transform var(--transition-base);
+  box-shadow: 1px 0 0 rgba(255, 255, 255, 0.5) inset;
+}
+
+/* Crimson â†’ Gold hairline along the sidebar's inner edge */
+.sidebar::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -1px;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(180deg,
+    rgba(158, 43, 46, 0.75) 0%,
+    rgba(196, 69, 69, 0.55) 45%,
+    rgba(182, 154, 98, 0.40) 100%);
+  pointer-events: none;
+}
+
+.sidebar.collapsed {
+  width: var(--sidebar-collapsed-width);
+}
+
+.sidebar-toggler {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: auto;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--color-text-secondary);
+  font-size: 0.8rem;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all var(--transition-fast);
+}
+
+.sidebar-toggler:hover {
+  background: var(--color-primary-soft);
+  border-color: var(--color-gold);
+  color: var(--color-primary);
+}
+
+.sidebar.collapsed .sidebar-toggler i {
+  transform: rotate(180deg);
+}
+
+.sidebar-mobile-toggler {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  margin-right: 0.25rem;
+  flex-shrink: 0;
+}
+
+.sidebar-mobile-toggler:hover {
+  background: var(--color-primary-soft);
+  border-color: var(--color-gold);
+  color: var(--color-primary);
+}
+
+.sidebar-brand {
+  /* Narrowed from 1.1rem with the sidebar at 264px, keeping the logo, wordmark
+     and collapse button on one row. */
+  padding: 1.3rem 0.8rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border-bottom: 1px solid var(--color-beige);
+  background: var(--color-beige-soft);
+  transition: padding var(--transition-base), justify-content var(--transition-base);
+}
+
+.sidebar-logo-img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+  flex-shrink: 0;
+  /* No drop shadow on the logo mark */
+  filter: none;
+  box-shadow: none;
+  transition: width var(--transition-base), height var(--transition-base);
+}
+
+.sidebar-title {
+  font-weight: 700;
+  font-size: 1.05rem;
+  color: var(--color-text);
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+  transition: opacity var(--transition-base);
+}
+
+.sidebar-brand-meta {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.2;
+  transition: opacity var(--transition-base);
+}
+
+.sidebar-nav {
+  padding: 1rem 0;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  /* Narrowed from 1.1rem with the sidebar at 264px. The labels are nowrap
+     (.sidebar-text), so padding is what decides whether "Start Facial
+     Recognition" and "Schedule Assignments" survive or get ellipsised. */
+  padding: 0.75rem 0.8rem;
+  color: var(--color-sidebar-text);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  transition: all var(--transition-fast);
+  border-left: 3px solid transparent;
+  position: relative;
+  margin: 0.15rem 0.5rem 0.15rem 0;
+  width: calc(100% - 0.5rem);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.sidebar-link:hover {
+  color: var(--color-sidebar-text-active);
+  background: var(--color-sidebar-hover);
+  text-decoration: none;
+  border-left-color: var(--color-crimson);
+}
+
+.sidebar-link.active {
+  color: var(--color-sidebar-text-active);
+  background: var(--color-sidebar-active);
+  border-left-color: var(--color-crimson);
+  font-weight: 600;
+}
+
+.sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, var(--color-crimson) 0%, var(--color-gold) 100%);
+  border-radius: 0 2px 2px 0;
+}
+
+.sidebar-link i {
+  font-size: 1.05rem;
+  width: 20px;
+  text-align: center;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
+  transition: color var(--transition-fast);
+}
+
+.sidebar-link:hover i {
+  color: var(--color-primary);
+}
+
+.sidebar-link.active i {
+  color: var(--color-primary);
+}
+
+.sidebar-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity var(--transition-base);
+}
+
+.sidebar .btn {
+  margin: 0.25rem 0;
+  width: 100%;
+  text-align: left;
+  padding: 0.55rem 0.9rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--color-sidebar-text);
+  border: 1px solid var(--color-border);
+  transition: all var(--transition-fast);
+}
+
+.sidebar .btn:hover {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+  border-color: var(--color-gold);
+}
+
+/* --- Collapsed state --- */
+.sidebar.collapsed .sidebar-title,
+.sidebar.collapsed .sidebar-brand-meta,
+.sidebar.collapsed .sidebar-text {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.sidebar.collapsed .sidebar-brand {
+  /* Stack the logo and the expand control so both stay reachable in the
+     collapsed rail. Without this the toggler is hidden and the sidebar
+     cannot be re-opened. */
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 0.5rem;
+}
+
+.sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding-left: 0;
+  padding-right: 0;
+  margin-right: 0.5rem;
+  width: calc(100% - 0.5rem);
+}
+
+.sidebar.collapsed .sidebar-toggler {
+  display: inline-flex;
+  margin-left: 0;
+  width: 28px;
+  height: 28px;
+  background: var(--color-surface);
+  border-color: var(--color-gold);
+  color: var(--color-primary);
+}
+
+.sidebar.collapsed .sidebar-toggler:hover {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+/* ============================================================
+   Manila City Hall clock tower â€” sidebar
+   The City Hall tower reads as: a gabled roof at the top, a belfry
+   holding the clock face, then a tall shaft of arched niches running
+   down to a stepped base. The sidebar maps onto those bands 1:1 so
+   the nav still behaves normally.
+   ============================================================ */
+
+/* --- 0. The panel box paints nothing. The header-coloured glass band lives on
+       .tower-cap alone, which is exactly --header-height tall and shares the
+       navbar's own declarations. Painting it here as well would double up the
+       translucency and reintroduce the mismatch. --- */
+/* The panel box keeps no edge treatment of its own: the drop-shadow lives on
+   .tower-cap so it traces the roof's silhouette rather than the panel's
+   rectangle, and the border is drawn by the bands inside the clip. */
+.sidebar.tower {
+  border-right: none;
+  box-shadow: none;
+  filter: none;
+
+  /* Procedural grain, shared by every stone band. An inline feTurbulence tile
+     rather than an image file: no extra request, no asset to lose, and it
+     scales with the panel. Kept faint â€” it is weathering, not decoration, and
+     it must not compete with the nav labels. */
+  --tower-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* `background` is the shorthand so it fully overrides the base rule's
+   `background: var(--color-sidebar)`, and backdrop-filter is off so no
+   rectangular backdrop-root region is painted over the whole panel. The stone
+   is carried entirely by the tower's own in-shape bands, and the glass header
+   band by .tower-cap alone. */
+.sidebar.tower {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Warm limestone for the shaft, several steps darker than the --color-ivory
+   page behind it. At the old value (rgba(243,236,225,.9)) the tower was the
+   same hue and lightness as the page, so the silhouette had no contrast.
+
+   Painted on the shaft band itself, which sits entirely inside the clip-path,
+   so no rectangle is filled behind the tower.
+
+   Layers back to front: weathering grain, then the stone body. The quoin
+   edge courses, cornice dentils and ashlar lining that were here before have
+   been taken back out; only the surface texture remains. Longhands rather than
+   the background shorthand, because the per-layer size/position/repeat below
+   only survive as longhands â€” the shorthand would reset them all to
+   auto/repeat. */
+.sidebar.tower .tower-niche-list {
+  background-color: #DCCBA9;
+  background-image:
+    /* Weathering grain over everything. */
+    var(--tower-grain),
+    /* Stone body. */
+    linear-gradient(180deg, #E6D9BE 0%, #DCCBA9 42%, #D2BF9A 100%);
+  background-repeat: repeat, no-repeat;
+  background-size: 160px 160px, 100% 100%;
+  background-position: 0 0, 0 0;
+  /* Crisp lit edge on the right face, so the form reads three-dimensionally.
+     Carried over from before the edge courses were added. */
+  box-shadow: inset -1px 0 0 rgba(255, 252, 245, 0.55);
+}
+
+/* The clock band continues the shaft's stone so there is no seam under the
+   dial, and is itself fully inside the clip. The red lives on the dial itself
+   (see .tower-clock-svg below), not on this band.
+
+   The belfry keeps its molded string course and coarser coursing â€” this band
+   reads as dressed, load-bearing stone and wants the lining. The shaft below
+   stays plain, as does the panel edge. */
+.sidebar.tower .tower-clock {
+  background-color: #E2D3B4;
+  background-image:
+    var(--tower-grain),
+    /* String course: a projecting molding across the head of the belfry. */
+    linear-gradient(180deg,
+      #CBB894 0px, #CBB894 3px,
+      rgba(120, 96, 68, 0.28) 3px, rgba(120, 96, 68, 0.28) 4px,
+      rgba(0, 0, 0, 0) 4px, rgba(0, 0, 0, 0) 34px),
+    /* Belfry coursing: wider blocks than the shaft's plain face. */
+    repeating-linear-gradient(180deg,
+      rgba(120, 96, 68, 0.16) 0px, rgba(120, 96, 68, 0.16) 1px,
+      rgba(0, 0, 0, 0) 1px, rgba(0, 0, 0, 0) 34px),
+    linear-gradient(180deg, #E6D9BE 0%, #DECDAC 100%);
+  background-repeat: repeat, repeat-y, repeat, no-repeat;
+  background-size: 160px 160px, 100% 34px, auto 34px, 100% 100%;
+  background-position: 0 0, 0 0, 0 0, 0 0;
+  border-bottom-color: var(--color-beige);
+}
+
+/* Plaque and dial sit on limestone again, so the original bronze inks hold. */
+.sidebar.tower .tower-clock-plaque {
+  color: #5C503F;
+}
+
+/* --- Contrast pass. The stone is darker than the old ivory fill, so the
+       nav's inherited greys are re-tuned against it. Without this the labels
+       and icons lose legibility on the deeper surface. --- */
+.sidebar.tower .sidebar-link {
+  color: #4A3E2E;
+  /* The rounded arch head and the voussoir ring that came with it have been
+     taken back out; the link keeps the base rule's square-cornered radius. */
+}
+
+.sidebar.tower .sidebar-link i {
+  color: #6A5C48;
+}
+
+.sidebar.tower .sidebar-link:hover,
+.sidebar.tower .sidebar-link.active {
+  color: #33291C;
+}
+
+.sidebar.tower .sidebar-link:hover i,
+.sidebar.tower .sidebar-link.active i {
+  color: #7A1F22;
+}
+
+/* Lift the real content above the fill layer. */
+.sidebar.tower > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* The existing crimsonâ†’gold edge hairline must follow the new silhouette,
+   so it is dropped in favour of the shaft's own right border. */
+.sidebar.tower::after {
+  display: none;
+}
+
+/* --- 1. Tapered cap: cupola, lantern and finial sitting on a sloping
+       roofline. This band fills the spire area left by the clip-path. --- */
+/* --- 1. The band behind the roof.
+        Painted with the navigation header's own declarations (grouped with
+        .top-navbar in section 4), so the roof's backdrop is the identical glass
+        surface the header is â€” same translucent fill, same blur, same hairline.
+        Header and roof now read as one continuous band across the top of the
+        page, and the two cannot drift apart again.
+
+        Only layout lives here, since the header's own rules do not apply: the
+        band's height is what the roof's clip-path is measured against, and it
+        must not flex with the panel. */
+.tower-cap {
+  position: relative;
+  height: var(--header-height);
+  flex-shrink: 0;
+}
+
+/* The roof: a detailed Manila City Hall-style dome sitting atop the tower
+   band. An inline SVG draws the rounded silhouette, curved panel seams,
+   raised central drum, and thin spire. The SVG fills the .tower-cap band
+   and anchors its bottom edge to the tower body so the dome reads as one
+   continuous structure with the beige shaft below. The tower-cap shares
+   the header's exact background (rgba(255,255,255,0.80) + backdrop-filter),
+   so the area around the dome matches the adjacent top header seamlessly. */
+.tower-dome {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Cornice / roof trim where the dome meets the tower body. */
+.tower-dome-cornice {
+  fill: none;
+  stroke: #5C1416;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+/* Dome faces: left lit warm terracotta, right shaded deep brick for depth. */
+.tower-dome-face {
+  stroke: none;
+}
+.tower-dome-face.left {
+  fill: url(#dome-left);
+}
+.tower-dome-face.right {
+  fill: url(#dome-right);
+}
+
+/* Curved panel seams resembling metal roofing panels. */
+.tower-dome-seam {
+  fill: none;
+  stroke: rgba(107, 25, 28, 0.45);
+  stroke-width: 1;
+  stroke-linecap: round;
+}
+
+/* Subtle highlight on the left face for dimensional lighting. */
+.tower-dome-highlight {
+  fill: rgba(255, 255, 255, 0.12);
+}
+
+/* Subtle shadow on the right face for dimensional depth. */
+.tower-dome-shadow {
+  fill: rgba(0, 0, 0, 0.10);
+}
+
+/* Raised cylindrical drum at the dome's crown. */
+.tower-dome-drum {
+  fill: #7A1F22;
+  stroke: #5C1416;
+  stroke-width: 0.5;
+}
+
+/* Decorative band around the drum. */
+.tower-dome-drum-band {
+  fill: none;
+  stroke: #5C1416;
+  stroke-width: 0.8;
+}
+
+/* Thin vertical spire extending from the drum's centre. */
+.tower-dome-spire {
+  fill: #5C1416;
+}
+
+/* Spire tip (small gold cap). */
+.tower-dome-spire-tip {
+  fill: #B69A62;
+}
+
+/* --- 2. Belfry clock face --- */
+.tower-clock {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.85rem 0 0.95rem;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.5) 0%, rgba(240, 231, 215, 0.35) 100%);
+  border-bottom: 2px solid var(--color-beige);
+}
+
+/* The clock face: a deep architectural red enamel dial ringed by a
+   bronze bezel, seated inside the belfry wall. Lit at the upper left
+   and deepening to the rim so the glass reads as domed rather than flat.
+   Moulded ring order, outermost inward: bronze bezel, lit stone fillet,
+   shadowed reveal, then the red dial itself. */
+.tower-clock-svg {
+  width: 84px;
+  height: 84px;
+  display: block;
+  overflow: visible;
+}
+
+.tower-clock-dial {
+  fill: #7A1F22;
+}
+
+.tower-clock-bezel {
+  fill: none;
+  stroke: var(--color-bronze);
+  stroke-width: 3;
+  filter: drop-shadow(0 3px 6px rgba(58, 12, 14, 0.35));
+}
+
+/* Warm ivory Roman numerals, set just inside the bezel so they read
+   as engraved markers against the red rather than floating on top. */
+.tower-clock-numeral {
+  fill: #F6E4DE;
+  font-family: 'Inter', Georgia, serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 2px rgba(58, 12, 14, 0.55);
+  pointer-events: none;
+}
+
+/* Hour ticks: pale engraved markers at each hour position. */
+.tower-clock-tick {
+  stroke: #F6E4DE;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  opacity: 0.85;
+}
+
+/* Hands are grouped at the dial centre (50,50); each line is drawn
+   straight down from the centre and rotated via SVG transform. */
+.tower-clock-hands {
+  transform-box: fill-box;
+  transform-origin: 50px 50px;
+}
+
+/* Hour hand: short and thick. Cream on red â€” espresso was legible on
+   porcelain but nearly the same value as the dial's lower half and
+   disappeared. */
+.tower-clock-hand-hour {
+  stroke: #FFF6F0;
+  stroke-width: 5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px rgba(58, 12, 14, 0.55));
+}
+
+/* Minute hand: longer and medium thickness. */
+.tower-clock-hand-minute {
+  stroke: #FFF6F0;
+  stroke-width: 3.5;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px rgba(58, 12, 14, 0.55));
+}
+
+/* Second hand: thin, sweeping continuously. Gold so it reads against
+   the cream hands as a distinct, finer element. */
+.tower-clock-hand-second {
+  stroke: var(--color-gold);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  filter: drop-shadow(0 0 2px rgba(58, 12, 14, 0.6));
+}
+
+/* Centre pin: a gold disc with a bronze rim, seating the hands. */
+.tower-clock-pin {
+  fill: var(--color-gold);
+  stroke: rgba(58, 12, 14, 0.55);
+  stroke-width: 1;
+}
+
+.tower-clock-plaque {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+/* --- 3. Shaft: nav links sit in arched niches --- */
+.tower-niche-list {
+  position: relative;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Stone coursing on the shaft, mirroring the building's masonry. */
+  background-image: repeating-linear-gradient(
+    180deg,
+    rgba(120, 96, 68, 0.055) 0px,
+    rgba(120, 96, 68, 0.055) 1px,
+    rgba(0, 0, 0, 0) 1px,
+    rgba(0, 0, 0, 0) 26px
+  );
+}
+
+.tower-niche-list .sidebar-nav {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Rounded top corners give each row the arch of a window opening. */
+.tower-niche-list .sidebar-link {
+  border-radius: 18px 18px var(--radius-md) var(--radius-md);
+  border: 1px solid transparent;
+  border-left: 1px solid transparent;
+}
+
+.tower-niche-list .sidebar-link:hover {
+  border-color: rgba(216, 197, 165, 0.9);
+}
+
+.tower-niche-list .sidebar-link.active {
+  border-color: rgba(182, 154, 98, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.7),
+    0 1px 4px rgba(73, 60, 44, 0.12);
+}
+
+/* Arch keystone detail on the active row. */
+.tower-niche-list .sidebar-link.active::after {
+  content: '';
+  position: absolute;
+  top: 5px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 14px;
+  height: 3px;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    rgba(182, 154, 98, 0) 0%,
+    var(--color-gold) 50%,
+    rgba(182, 154, 98, 0) 100%);
+}
+
+/* --- 4. Stepped base --- */
+.tower-base {
+  flex-shrink: 0;
+  height: 16px;
+  border-top: 2px solid var(--color-beige);
+  background:
+    linear-gradient(180deg, var(--color-beige-tint) 0%, var(--color-beige) 100%);
+}
+
+/* A molded plinth molding above the stepped base, so the shaft lands on a
+   profile rather than a hard color change. Inside the clip, like every other
+   band. */
+.sidebar.tower .tower-base {
+  background-color: #D2BF9A;
+  background-image:
+    var(--tower-grain),
+    repeating-linear-gradient(90deg,
+      rgba(120, 96, 68, 0.22) 0px, rgba(120, 96, 68, 0.22) 1px,
+      rgba(0, 0, 0, 0) 1px, rgba(0, 0, 0, 0) 11px),
+    /* Three-step molding: overhang, fillet, overhang. */
+    linear-gradient(180deg,
+      #E0D0AF 0px, #E0D0AF 2px,
+      rgba(120, 96, 68, 0.26) 2px, rgba(120, 96, 68, 0.26) 3px,
+      #C9B894 3px, #C9B894 8px,
+      rgba(120, 96, 68, 0.26) 8px, rgba(120, 96, 68, 0.26) 9px,
+      #CBB894 9px, #CBB894 16px);
+  background-repeat: repeat, repeat, no-repeat;
+  background-size: 160px 160px, auto 11px, 100% 16px;
+  background-position: 0 0, 0 0, 0 0;
+  box-shadow: inset 0 -1px 0 rgba(120, 96, 68, 0.30);
+}
+
+/* --- 5. Logo plinth: the brand sits at the foot of the tower, so the
+       tapered cap has the run of the panel to itself. --- */
+.tower-plinth {
+  border-bottom: none;
+  border-top: 1px solid rgba(120, 96, 68, 0.35);
+  /* Reads as the plinth's front face: deeper and warmer than the shaft. */
+  background: linear-gradient(180deg, #CBB894 0%, #C0AB84 100%);
+  position: relative;
+  flex-shrink: 0;
+}
+
+/* Pedestal the logo stands on, so it reads as part of the base. */
+.tower-plinth::before {
+  content: '';
+  position: absolute;
+  left: 0.7rem;
+  right: 0.7rem;
+  top: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    rgba(182, 154, 98, 0) 0%,
+    var(--color-gold) 50%,
+    rgba(182, 154, 98, 0) 100%);
+}
+
+/* --- Collapsed rail: keep the clock readable, drop the ornament --- */
+
+.sidebar.collapsed.tower {
+  padding-inline: 8px;
+}
+
+.sidebar.collapsed .tower-clock-svg {
+  width: 46px;
+  height: 46px;
+}
+
+.sidebar.collapsed .tower-clock-numeral {
+  font-size: 5.5px;
+}
+
+.sidebar.collapsed .tower-clock-tick {
+  stroke-width: 1.2;
+}
+
+.sidebar.collapsed .tower-clock-hand-hour {
+  stroke-width: 3.5;
+}
+
+.sidebar.collapsed .tower-clock-hand-minute {
+  stroke-width: 2.5;
+}
+
+.sidebar.collapsed .tower-clock-hand-second {
+  stroke-width: 1.4;
+}
+
+.sidebar.collapsed .tower-clock-pin {
+  r: 3;
+}
+
+.sidebar.collapsed .tower-clock-plaque {
+  display: none;
+}
+
+.sidebar.collapsed .tower-clock {
+  padding: 0.6rem 0 0.7rem;
+}
+
+.sidebar.collapsed .tower-base {
+  height: 10px;
+}
+
+.sidebar.collapsed .tower-niche-list .sidebar-link {
+  border-radius: 14px 14px var(--radius-md) var(--radius-md);
+}
+
+/* --- Respect reduced-motion: a ticking clock is exactly the kind of
+        repetitive motion that setting exists to suppress. --- */
+@media (prefers-reduced-motion: reduce) {
+  .tower-clock-hands {
+    transition: none !important;
+  }
+}
+
+.sidebar-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(73, 60, 44, 0.42);
+  z-index: 998;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.sidebar-backdrop.show {
+  display: block;
+  opacity: 1;
+}
+
+/* ============================================================
+   6. MAIN CONTENT & BACKGROUND
+   ============================================================ */
+.main-content {
+  margin-left: var(--sidebar-width);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  transition: margin-left var(--transition-base);
+  position: relative;
+}
+
+/* Real content must sit above the decorative ambient orbs WITHOUT creating
+   a stacking context on <main>.
+   An earlier version raised `main` to z-index: 1, which trapped every
+   Bootstrap modal inside it â€” .modal is z-index 1055, but nested in a
+   context whose own level is 1 it fell behind the sidebar (1000) and
+   navbar (999) and became unclickable. Content needs no z-index at all:
+   the background and orb layers are pushed negative instead. */
+
+.main-content.sidebar-collapsed {
+  margin-left: var(--sidebar-collapsed-width);
+}
+
+/* App shell background: New_bgg.jpg.
+   Tuned against the ivory wash below so the image reads through while
+   cards stay legible. Framing is a 2:1 source in a taller viewport, so the
+   position is a vertical bias. The login page uses a different photo â€”
+   see .login-body further down.
+
+   Fixed to the viewport, not to .main-content. These layers used to be
+   absolute inside .main-content, which is offset by margin-left: 300px, so
+   they were clipped to the right of the sidebar. The fixed sidebar is fully
+   transparent, so the roof band behind it then sat on bare body ivory while
+   the header sat on the photo â€” the two blurred different content and could
+   never match no matter what the glass declarations said.
+
+   Making the layers viewport-fixed makes the backdrop one continuous surface
+   spanning under both the header and the roof. Because the photo is already
+   background-attachment: fixed, it was already rendered viewport-sized and
+   only clipped; un-clipping it leaves every pixel inside the main area
+   unchanged. */
+.dashboard-image-background {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  background: url('/images/bgbg.png?v=B5FC7D6F') no-repeat center center fixed;
+  background-size: cover;
+  z-index: -4;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+/* Ivory wash over the photo. Viewport-fixed for the same reason as the photo
+   above, so the roof band gets this wash too and the two bands are veiled
+   identically. */
+.dashboard-video-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  /* Light ivory wash only â€” the building stays clearly visible */
+  background:
+    linear-gradient(135deg, rgba(245, 240, 231, 0.30) 0%, rgba(245, 240, 231, 0.18) 55%, rgba(245, 240, 231, 0.12) 100%);
+  /* Light ivory wash only â€” the building stays clearly visible.
+     No blur here: the shell background renders sharp. */
+  z-index: -3;
+  pointer-events: none;
+}
+
+.main-content main {
+  padding: 1.75rem 2rem 0;
+  flex: 1;
+}
+
+/* ============================================================
+   7. PAGE HEADER & WELCOME BANNER
+   ============================================================ */
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  font-size: var(--font-size-page);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+  line-height: 1.2;
+  letter-spacing: -0.015em;
+}
+
+.page-subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0.3rem 0 0;
+  max-width: 62ch;
+}
+
+/* Section heading with a thin accent rule, inspired by neoclassical detailing */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-size: var(--font-size-section);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 0.85rem;
+}
+
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    rgba(46, 155, 214, 0.55) 0%,
+    rgba(182, 154, 98, 0.45) 50%,
+    rgba(196, 69, 69, 0.30) 100%);
+}
+
+/* --- Welcome banner: New_bgg.jpg, matching the app shell --- */
+.welcome-banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 1.5rem;
+  isolation: isolate;
+}
+
+.welcome-banner-media {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: url('/images/blur.png') no-repeat center 40%;
+  background-size: cover;
+  opacity: 0.9;
+}
+
+/* Ivory panel on the reading side so the copy stays crisp; the building
+   stays visible across the rest of the banner. The blur is applied here so
+   the banner's own overflow:hidden clips it â€” no overscan needed. */
+.welcome-banner::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(100deg, rgba(255, 255, 255, 0.94) 0%, rgba(255, 255, 255, 0.86) 48%, rgba(255, 255, 255, 0.44) 100%);
+  backdrop-filter: blur(4px) saturate(118%);
+  -webkit-backdrop-filter: blur(4px) saturate(118%);
+}
+
+.welcome-banner-body {
+  padding: 1.6rem 1.85rem;
+  max-width: 62ch;
+}
+
+.welcome-banner-eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--color-sky-deep);
+  background: var(--color-sky-soft);
+  border: 1px solid rgba(46, 155, 214, 0.35);
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  margin-bottom: 0.6rem;
+}
+
+.welcome-banner-title {
+  font-size: 22px;
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0 0 0.3rem;
+  line-height: 1.25;
+}
+
+.welcome-banner-text {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ============================================================
+   8. CARDS
+   ============================================================ */
+/* Textured glass card: translucent body + specular highlight + grain. */
+.card {
+  position: relative;
+  isolation: isolate;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(14px) saturate(135%);
+  -webkit-backdrop-filter: blur(14px) saturate(135%);
+  border: 1px solid var(--gold-hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-premium), var(--glass-rim);
+  transition: box-shadow var(--transition-base), transform var(--transition-base), border-color var(--transition-base);
+  color: var(--color-text);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--glass-specular);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--glass-grain);
+  background-size: 140px 140px;
+  opacity: var(--glass-grain-opacity);
+  z-index: -1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-premium-lg), var(--glass-rim);
+  border-color: var(--color-gold);
+  transform: translateY(-2px);
+}
+
+/* Elevated lift for interactive cards only â€” a card containing a
+   table is scrolled, not clicked, so lifting it adds nothing. */
+.card-interactive:hover {
+  cursor: pointer;
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-premium-lg), var(--glass-rim);
+}
+
+/* Row hover on data cards */
+.table tbody tr {
+  transition: background-color var(--transition-fast);
+}
+
+.table tbody tr:hover {
+  background: rgba(158, 43, 46, 0.035);
+}
+
+/* Modern flat header: hairline rule, no gradient fill */
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid var(--color-border);
+  padding: 1rem 1.35rem;
+  font-weight: 600;
+  color: var(--color-text);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.card-header i:first-child {
+  color: var(--color-gold);
+}
+
+.card-body {
+  padding: 1.35rem;
+  color: var(--color-text);
+}
+
+.card-title {
+  font-size: var(--font-size-card);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-bottom: 0.65rem;
+}
+
+.card-footer {
+  background: transparent;
+  border-top: 1px solid var(--color-border);
+  padding: 1rem 1.35rem;
+}
+
+.employee-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.employee-card .card-footer {
+  margin-top: auto;
+}
+
+/* --- Statistic tiles: the numerical "hero" of each dashboard card --- */
+.stat-value {
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.05;
+  color: var(--color-text);
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.stat-label {
+  font-size: var(--font-size-support);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+  margin-top: 0.4rem;
+}
+
+.stat-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  background: var(--tint-primary);
+  border: 1px solid var(--gold-hairline);
+  color: var(--color-primary);
+  transition: transform var(--transition-base), box-shadow var(--transition-base),
+              background-color var(--transition-base);
+}
+
+/* Count-up hook â€” site.js sets the final value; the tile animates
+   its own arrival so it feels connected to the number. */
+.stat-value {
+  animation: riseIn 460ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Icon lifts and takes a crimson glow while its parent card is hovered */
+.card:hover .stat-icon,
+.premium-form-card:hover .stat-icon {
+  transform: translateY(-2px) scale(1.04);
+  box-shadow: 0 6px 16px rgba(158, 43, 46, 0.22);
+}
+
+/* ============================================================
+   9. TABLES
+   ============================================================ */
+.table {
+  width: 100%;
+  margin: 0;
+  /* Near-opaque: never place glass behind data-heavy tables */
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  color: var(--color-text);
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.table > :not(caption) > * > * {
+  padding: 0.85rem 1.05rem;
+  background: transparent;
+  border-bottom: 1px solid var(--color-border);
+  vertical-align: middle;
+}
+
+.table thead th {
+  background: var(--color-beige-tint);
+  color: var(--color-text-secondary);
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border-bottom: 1px solid var(--color-beige);
+  white-space: nowrap;
+  position: sticky;
+  top: var(--header-height);
+  z-index: 2;
+}
+
+.table thead th:first-child { border-top-left-radius: var(--radius-lg); }
+.table thead th:last-child { border-top-right-radius: var(--radius-lg); }
+
+.table tbody td {
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+}
+
+.table tbody td strong,
+.table tbody td .fw-semibold {
+  color: var(--color-text);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.table tbody tr:hover td {
+  background: #FBF7F0;
+}
+
+.table-striped tbody tr:nth-of-type(odd) td {
+  background: #FDFBF7;
+}
+
+.table-striped tbody tr:nth-of-type(odd):hover td {
+  background: #FBF7F0;
+}
+
+.table-sm > :not(caption) > * > * {
+  padding: 0.5rem 0.7rem;
+  font-size: 13px;
+}
+
+.table > :not(caption) > * > * > * .table-active,
+.table > :not(caption) > * > * .table-active {
+  background: var(--color-accent-soft);
+}
+
+.form-control-plaintext {
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.85rem;
+  color: var(--color-text-secondary);
+}
+
+/* ============================================================
+   10. BUTTONS
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  font-size: 14px;
+  line-height: 1.4;
+  padding: 0.6rem 1.1rem;
+  border-radius: var(--radius-button);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: center;
+  vertical-align: middle;
+  transition: all var(--transition-fast);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.btn:hover {
+  text-decoration: none;
+}
+
+.btn:disabled,
+.btn.disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.btn i {
+  line-height: 1;
+}
+
+/* --- Primary: Deep Crimson, lacquered with a vertical sheen --- */
+/* Sheen that sweeps across a crimson surface on hover. Purely
+   decorative, sits above the fill but below the label. */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-shimmer::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 45%;
+  height: 100%;
+  background: linear-gradient(100deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.30) 50%,
+    rgba(255, 255, 255, 0) 100%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.btn-shimmer:hover::before {
+  animation: shimmerSweep 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Ripple from the pointer position, positioned by site.js */
+.btn-ripple {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  transform: scale(0);
+  pointer-events: none;
+  animation: rippleOut 620ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  z-index: 0;
+}
+
+@keyframes rippleOut {
+  to {
+    transform: scale(2.4);
+    opacity: 0;
+  }
+}
+
+/* --- Reveal on scroll ---------------------------------------
+   site.js adds .reveal-ready before observing, so content is
+   only hidden when the observer is actually going to release
+   it. Without JS, nothing is ever hidden. */
+.reveal.reveal-ready {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 520ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 520ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.reveal.reveal-ready.is-revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.btn-primary {
+  background: linear-gradient(180deg, var(--color-crimson) 0%, var(--color-crimson-deep) 100%);
+  border-color: var(--color-crimson-deep);
+  color: #FFFFFF;
+  box-shadow: var(--shadow-crimson);
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  letter-spacing: 0.015em;
+}
+
+/* Top gloss â€” reads as a polished lacquer surface */
+.btn-primary::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 100%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+  background: linear-gradient(180deg, var(--color-crimson-deep) 0%, var(--color-crimson-ink) 100%);
+  border-color: var(--color-crimson-ink);
+  color: #FFFFFF;
+  box-shadow: 0 4px 10px rgba(122, 31, 34, 0.26), 0 14px 32px rgba(122, 31, 34, 0.24);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+.btn-outline-primary {
+  background: transparent;
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+/* --- Status buttons use the ink tone for accessible contrast --- */
+.btn-success {
+  background: var(--color-success-ink);
+  border-color: var(--color-success-ink);
+  color: #FFFFFF;
+}
+
+.btn-success:hover, .btn-success:focus {
+  background: #1A5039;
+  border-color: #1A5039;
+  color: #FFFFFF;
+}
+
+.btn-warning {
+  background: var(--color-warning-ink);
+  border-color: var(--color-warning-ink);
+  color: #FFFFFF;
+}
+
+.btn-warning:hover, .btn-warning:focus {
+  background: #66430F;
+  border-color: #66430F;
+  color: #FFFFFF;
+}
+
+.btn-danger {
+  background: var(--color-danger-ink);
+  border-color: var(--color-danger-ink);
+  color: #FFFFFF;
+}
+
+.btn-danger:hover, .btn-danger:focus {
+  background: #7A2625;
+  border-color: #7A2625;
+  color: #FFFFFF;
+}
+
+.btn-info {
+  background: var(--color-info-ink);
+  border-color: var(--color-info-ink);
+  color: #FFFFFF;
+}
+
+.btn-info:hover, .btn-info:focus {
+  background: #324752;
+  border-color: #324752;
+  color: #FFFFFF;
+}
+
+.btn-secondary {
+  background: var(--color-beige);
+  border-color: var(--color-beige);
+  color: var(--color-text);
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+  background: #CDB894;
+  border-color: #CDB894;
+  color: var(--color-text);
+}
+
+.btn-outline-secondary {
+  background: transparent;
+  border-color: var(--color-border-hover);
+  color: var(--color-text-secondary);
+}
+
+.btn-outline-secondary:hover, .btn-outline-secondary:focus {
+  background: var(--color-primary-soft);
+  border-color: var(--color-gold);
+  color: var(--color-primary-hover);
+}
+
+.btn-light {
+  background: var(--color-surface);
+  border-color: var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.btn-light:hover, .btn-light:focus {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.btn-sm {
+  padding: 0.35rem 0.7rem;
+  font-size: 12.5px;
+  border-radius: 8px;
+}
+
+.btn-lg {
+  padding: 0.8rem 1.4rem;
+  font-size: 15px;
+}
+
+.btn-close {
+  background: transparent;
+  border: 0;
+  opacity: 0.55;
+  color: var(--color-text);
+  transition: opacity var(--transition-fast);
+}
+
+.btn-close:hover {
+  opacity: 1;
+}
+
+.btn-link {
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.btn-link:hover {
+  color: var(--color-primary-hover);
+}
+
+/* ============================================================
+   11. FORMS
+   ============================================================ */
+.form-control,
+.form-select {
+  display: block;
+  width: 100%;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.85rem;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--color-text);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast), background-color var(--transition-fast);
+  min-height: 42px;
+}
+
+.form-control::placeholder {
+  color: #A2958A;
+}
+
+.form-control:disabled,
+.form-select:disabled {
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.form-control[readonly] {
+  background: var(--color-surface-alt);
+  color: var(--color-text-secondary);
+}
+
+.form-control:focus,
+.form-select:focus {
+  background: var(--color-surface);
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+  color: var(--color-text);
+}
+
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: var(--color-danger);
+  background-image: none;
+  box-shadow: 0 0 0 3px var(--color-danger-soft);
+}
+
+.form-control.is-valid,
+.form-select.is-valid {
+  border-color: var(--color-success);
+  background-image: none;
+  box-shadow: 0 0 0 3px var(--color-success-soft);
+}
+
+.form-label {
+  display: inline-block;
+  margin-bottom: 0.4rem;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text);
+  letter-spacing: 0.01em;
+}
+
+.form-text {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: var(--font-size-support);
+  color: var(--color-text-muted);
+  line-height: 1.45;
+}
+
+/* Validation messages (jQuery unobtrusive / asp-validation) */
+.field-validation-error,
+.validation-summary-errors,
+.validation-summary-valid {
+  color: var(--color-danger-ink);
+  font-size: var(--font-size-support);
+  margin-top: 0.35rem;
+}
+
+.field-validation-valid {
+  display: none;
+}
+
+input[type="text"].input-validation-error,
+input[type="email"].input-validation-error,
+input[type="password"].input-validation-error,
+select.input-validation-error {
+  border-color: var(--color-danger);
+}
+
+.form-check {
+  display: block;
+  min-height: 1.35rem;
+  padding-left: 1.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.form-check-input {
+  float: left;
+  margin-left: -1.5rem;
+  width: 1.1em;
+  height: 1.1em;
+  margin-top: 0.2em;
+  vertical-align: top;
+  background-color: var(--color-surface);
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: contain;
+  border: 1px solid var(--color-beige);
+  appearance: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+}
+
+.form-check-input[type="radio"] {
+  border-radius: 50%;
+}
+
+.form-check-input:checked {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+}
+
+.form-check-input:focus {
+  border-color: var(--color-primary);
+  box-shadow: var(--shadow-focus);
+  outline: none;
+}
+
+.form-check-label {
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.input-group-text {
+  display: flex;
+  align-items: center;
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 0.6rem 0.85rem;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  min-height: 42px;
+}
+
+.input-group .form-control:not(:first-child),
+.input-group .form-select:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+}
+
+.input-group .form-control:not(:last-child),
+.input-group .form-select:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+textarea.form-control {
+  min-height: 110px;
+  resize: vertical;
+}
+
+select.form-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23776A5C' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpath d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1rem 1rem;
+  padding-right: 2.4rem;
+}
+
+/* ============================================================
+   12. ALERTS
+   ============================================================ */
+.alert {
+  position: relative;
+  padding: 0.85rem 1rem 0.85rem 2.6rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  color: var(--color-text);
+  font-size: 14px;
+  margin-bottom: 1rem;
+}
+
+.alert::before {
+  content: '\F26A';
+  font-family: bootstrap-icons;
+  position: absolute;
+  left: 1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1.05rem;
+}
+
+.alert-success {
+  background: var(--color-success-soft);
+  border-color: rgba(46, 125, 91, 0.28);
+  color: var(--color-success-ink);
+}
+
+.alert-success::before { color: var(--color-success); }
+
+.alert-danger {
+  background: var(--color-danger-soft);
+  border-color: rgba(196, 69, 69, 0.28);
+  color: var(--color-danger-ink);
+}
+
+.alert-danger::before { color: var(--color-danger); }
+
+.alert-info {
+  background: var(--color-info-soft);
+  border-color: rgba(85, 112, 127, 0.28);
+  color: var(--color-info-ink);
+}
+
+.alert-info::before { color: var(--color-info); }
+
+.alert-warning {
+  background: var(--color-warning-soft);
+  border-color: rgba(197, 139, 50, 0.32);
+  color: var(--color-warning-ink);
+}
+
+.alert-warning::before { color: var(--color-warning); }
+
+/* ============================================================
+   13. BADGES & STAT SURFACES
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.28rem 0.65rem;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  line-height: 1.4;
+  white-space: nowrap;
+  /* Glass rather than flat fill. The badges sit on frosted cards and on the
+     striped table rows, so a translucent tint picks up whatever is behind it
+     and keeps the same material as the rest of the UI. A soft cast shadow
+     lifts the pill off the row; the inset rim gives it the 1px edge that reads
+     as thickness. Saturate is kept modest â€” a high value amplifies the card
+     behind and washes the tint out. */
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+  box-shadow:
+    0 2px 6px rgba(73, 60, 44, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.70);
+  transition: box-shadow var(--transition-fast);
+}
+
+/* The status icon keeps the pill's own hue and sits tight against the label. */
+.badge i {
+  font-size: 0.95em;
+  line-height: 1;
+}
+
+/* Status badges pair colour WITH a text label â€” never colour alone.
+
+   !important is required, not decorative. Bootstrap ships its own
+   .bg-success / .bg-warning / .bg-info rules as
+   `background-color: ... !important`, so the background-color longhand of the
+   gradient below was being overridden by Bootstrap's solid fill. That left a
+   solid saturated pill carrying this palette's deep ink â€” e.g. "On Time" was
+   #22654A text on Bootstrap's mid green, which is close to unreadable. The
+   shorthand with !important wins on specificity and resets the longhand, so
+   the gradient actually paints. */
+.badge.bg-success {
+  background: linear-gradient(180deg,
+    rgba(46, 125, 91, 0.16) 0%, rgba(46, 125, 91, 0.06) 100%) !important;
+  color: #1E4D3A;
+  border-color: rgba(46, 125, 91, 0.34);
+}
+
+.badge.bg-info {
+  background: linear-gradient(180deg,
+    rgba(85, 112, 127, 0.16) 0%, rgba(85, 112, 127, 0.06) 100%) !important;
+  color: #3F5460;
+  border-color: rgba(85, 112, 127, 0.34);
+}
+
+.badge.bg-warning {
+  background: linear-gradient(180deg,
+    rgba(176, 129, 40, 0.20) 0%, rgba(176, 129, 40, 0.08) 100%) !important;
+  color: #6B4A17;
+  border-color: rgba(176, 129, 40, 0.40);
+}
+
+.badge.bg-danger {
+  background: linear-gradient(180deg,
+    rgba(178, 59, 59, 0.16) 0%, rgba(178, 59, 59, 0.06) 100%) !important;
+  color: #7E2A29;
+  border-color: rgba(178, 59, 59, 0.34);
+}
+
+.badge.bg-secondary,
+.badge.bg-light {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.80) 0%, rgba(255, 255, 255, 0.56) 100%) !important;
+  color: var(--color-text-secondary);
+  border-color: var(--color-border);
+}
+
+.badge.bg-primary {
+  background: linear-gradient(180deg,
+    rgba(158, 43, 46, 0.15) 0%, rgba(158, 43, 46, 0.05) 100%) !important;
+  color: #7A2124;
+  border-color: rgba(158, 43, 46, 0.32);
+}
+
+/* --- Statistic tiles ---
+   Light status-tinted cards. Fully saturated blocks were too heavy against the
+   ivory page, and plain white lost the colour entirely â€” these sit in between:
+   a soft wash of the status hue, strongest at the top, with the numeral in the
+   matching deep ink so it stays the hero of the tile.
+
+   Scoped to .card so the .badge.* treatments further up keep their own look.
+   The views still carry Bootstrap's .text-white utility, so the dark ink below
+   is set with !important to win against it. */
+.card.bg-primary,
+.card.bg-success,
+.card.bg-warning,
+.card.bg-danger,
+.card.bg-info,
+.card.bg-secondary-gradient,
+.card.bg-light {
+  position: relative;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  color: var(--color-text) !important;
+  background: var(--color-surface) !important;
+  /* The base .card is textured glass â€” blurred backdrop plus a specular
+     overlay. Recolouring the background alone still left these tiles frosted,
+     so the blur is switched off here: the wash is a flat colour, not glass. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+/* Suppress the glass overlays for the same reason. The base .card::before
+   paints a specular highlight and .card::after a grain layer in overlay blend;
+   on a flat tint they read as a smear and a texture change rather than glass. */
+.card.bg-primary::before, .card.bg-success::before,
+.card.bg-warning::before, .card.bg-danger::before,
+.card.bg-info::before, .card.bg-secondary-gradient::before,
+.card.bg-light::before,
+.card.bg-primary::after, .card.bg-success::after,
+.card.bg-warning::after, .card.bg-danger::after,
+.card.bg-info::after, .card.bg-secondary-gradient::after,
+.card.bg-light::after { display: none; }
+
+/* The base .card:hover swaps in the glass rim and a gold border, which would
+   re-introduce the glass read on hover and leave the tint mismatched. */
+.card.bg-primary:hover, .card.bg-success:hover, .card.bg-warning:hover,
+.card.bg-danger:hover, .card.bg-info:hover, .card.bg-secondary-gradient:hover,
+.card.bg-light:hover {
+  box-shadow: 0 10px 24px rgba(73, 60, 44, 0.16);
+  transform: none;
+}
+
+/* Per-status bodies. Fully opaque, and the two stops are both solid colours â€”
+   the earlier version used an rgba wash fading to transparent, which let the
+   building photo show through and read as glass rather than as a painted
+   surface. The gentle top-to-bottom shift stays, but in solid tones so the
+   tile has depth without becoming a lens. */
+.card.bg-primary,
+.card.bg-secondary-gradient {
+  background: linear-gradient(180deg, #F5E7E6 0%, #E9D5D4 100%) !important;
+  border-color: #D9BDBB;
+}
+
+.card.bg-success {
+  background: linear-gradient(180deg, #E4F1EA 0%, #D3E7DD 100%) !important;
+  border-color: #B4D3C4;
+}
+
+.card.bg-warning {
+  background: linear-gradient(180deg, #FAF0DA 0%, #F0E1BD 100%) !important;
+  border-color: #DEC894;
+}
+
+.card.bg-danger {
+  background: linear-gradient(180deg, #F9E5E5 0%, #EED1D1 100%) !important;
+  border-color: #DCB2B2;
+}
+
+.card.bg-info {
+  background: linear-gradient(180deg, #F1EADE 0%, #E3D8C7 100%) !important;
+  border-color: #CDBCA2;
+}
+
+.card.bg-light {
+  background: linear-gradient(180deg, #FCFAF6 0%, #F2ECE1 100%) !important;
+  border-color: var(--color-beige);
+}
+
+/* 3px status accent along the top edge, plus a lit lip where the wash meets
+   the card border. */
+.card.bg-primary, .card.bg-secondary-gradient { border-top: 3px solid #A83236; }
+.card.bg-success { border-top: 3px solid #2E7D5B; }
+.card.bg-warning { border-top: 3px solid #B8862A; }
+.card.bg-danger { border-top: 3px solid #B23B3B; }
+.card.bg-info { border-top: 3px solid #7D6444; }
+
+.card.bg-primary, .card.bg-secondary-gradient, .card.bg-success,
+.card.bg-warning, .card.bg-danger, .card.bg-info {
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+/* Numeral carries the deep ink of its own hue, so the colour reads without
+   the tile ever going saturated. */
+.card.bg-primary .stat-value,
+.card.bg-secondary-gradient .stat-value { color: #8E2427; }
+.card.bg-success .stat-value { color: #22654A; }
+.card.bg-warning .stat-value { color: #7E551A; }
+.card.bg-danger .stat-value { color: #93302F; }
+.card.bg-info .stat-value { color: #6A5335; }
+.card.bg-light .stat-value { color: var(--color-text); }
+
+.card.bg-primary .card-title,
+.card.bg-secondary-gradient .card-title,
+.card.bg-success .card-title,
+.card.bg-warning .card-title,
+.card.bg-danger .card-title,
+.card.bg-info .card-title,
+.card.bg-light .card-title { color: var(--color-text-secondary); }
+
+/* Support labels sit a step back from the numeral, so they stay muted. */
+.card.bg-primary .stat-label, .card.bg-secondary-gradient .stat-label,
+.card.bg-success .stat-label, .card.bg-warning .stat-label,
+.card.bg-danger .stat-label, .card.bg-info .stat-label,
+.card.bg-light .stat-label { color: var(--color-text-muted); }
+
+/* Icon chip: a solid, slightly deeper step of its own status so it still
+   separates from the tile it sits on without going translucent. */
+.card.bg-primary .stat-icon, .card.bg-secondary-gradient .stat-icon {
+  color: #8E2427; border-color: #C99B99; background: #E9D5D4;
+}
+.card.bg-success .stat-icon {
+  color: #22654A; border-color: #9FC6B4; background: #D3E7DD;
+}
+.card.bg-warning .stat-icon {
+  color: #7E551A; border-color: #CDAE72; background: #F0E1BD;
+}
+.card.bg-danger .stat-icon {
+  color: #93302F; border-color: #CE9393; background: #EED1D1;
+}
+.card.bg-info .stat-icon {
+  color: #6A5335; border-color: #B8A487; background: #E3D8C7;
+}
+
+.card.bg-light .stat-icon {
+  color: var(--color-text);
+  border-color: var(--color-border);
+  background: var(--color-beige-soft);
+}
+
+/* ============================================================
+   14. PREMIUM COMPONENTS
+   ============================================================ */
+.premium-form-card {
+  position: relative;
+  isolation: isolate;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(16px) saturate(135%);
+  -webkit-backdrop-filter: blur(16px) saturate(135%);
+  border: 1px solid var(--gold-hairline);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-premium-lg), var(--glass-rim);
+  overflow: hidden;
+  color: var(--color-text);
+}
+
+.premium-form-card:hover {
+  transform: translateY(-2px);
+}
+
+.premium-form-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--glass-specular);
+  z-index: -1;
+  pointer-events: none;
+}
+
+.premium-form-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--glass-grain);
+  background-size: 140px 140px;
+  opacity: var(--glass-grain-opacity);
+  z-index: -1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+.premium-form-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.35rem 1.6rem;
+  background: transparent;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+/* Short crimson â†’ gold signature rule under the header */
+.premium-form-header::after {
+  content: '';
+  position: absolute;
+  left: 1.6rem;
+  bottom: -1px;
+  width: 56px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--accent-rule);
+}
+
+/* Travelling highlight across the crimson signature rule */
+.premium-form-header::before {
+  content: '';
+  position: absolute;
+  left: 1.6rem;
+  bottom: -1px;
+  width: 56px;
+  height: 2px;
+  border-radius: 2px;
+  background: linear-gradient(90deg,
+    rgba(255, 255, 255, 0.95) 0%,
+    rgba(255, 255, 255, 0) 100%);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.premium-form-card:hover .premium-form-header::before {
+  animation: ruleSheen 1400ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.premium-form-header h2,
+.premium-form-header h3,
+.premium-form-header h5,
+.premium-form-header .h5,
+.premium-form-header .h3 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.premium-form-header p {
+  margin: 0.2rem 0 0;
+  font-size: var(--font-size-support);
+  color: var(--color-text-secondary);
+}
+
+.premium-form-body {
+  padding: 1.6rem;
+}
+
+.premium-form-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 1.2rem 1.6rem;
+  background: transparent;
+  border-top: 1px solid var(--color-border);
+}
+
+.premium-section-card {
+  position: relative;
+  isolation: isolate;
+  background: var(--color-surface);
+  border: 1px solid var(--gold-hairline);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-premium), var(--glass-rim);
+  overflow: hidden;
+  color: var(--color-text);
+}
+
+.premium-section-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--glass-grain);
+  background-size: 140px 140px;
+  opacity: calc(var(--glass-grain-opacity) * 0.7);
+  z-index: -1;
+  pointer-events: none;
+  mix-blend-mode: multiply;
+}
+
+.premium-section-header {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.85rem 1.15rem;
+  background: var(--color-beige-soft);
+  border-bottom: 1px solid var(--color-border);
+  font-weight: 600;
+  font-size: var(--font-size-card);
+  color: var(--color-text);
+}
+
+.premium-section-header i {
+  color: var(--color-gold);
+}
+
+.premium-section-body {
+  padding: 1.15rem;
+}
+
+.premium-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.premium-table-wrapper {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+}
+
+.premium-table-wrapper .table {
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  margin: 0;
+}
+
+/* Static header inside the wrapper.
+   `.table thead th` is sticky at top: var(--header-height) so it pins under
+   the fixed navbar during page scroll. That cannot work here: the wrapper is
+   an overflow container, so the header's 68px offset is measured inside the
+   wrapper instead of the viewport and the header lands on top of the first
+   row. Overflow is kept hidden (not auto) deliberately â€” `overflow-x: auto`
+   makes the browser compute `overflow-y: auto` too, which is what turned the
+   sticky offset into an overlap. */
+.premium-table-wrapper .table > thead > tr > th {
+  position: static;
+  background: var(--color-beige-tint);
+}
+
+/* Actions cell: nowrap so the View/Delete pair cannot squeeze the
+   neighbouring columns. */
+.premium-table-wrapper .table > tbody > tr > td:last-child {
+  white-space: nowrap;
+}
+
+/* The generic cell rule above sets an opaque background on every cell
+   at higher specificity than .table-striped, which silently killed the
+   striping inside wrappers. Re-assert the stripe and hover fills here
+   so the wrapper does not change the table's appearance. */
+.premium-table-wrapper .table-striped > tbody > tr:nth-of-type(odd) > td {
+  background: #FDFBF7;
+}
+
+.premium-table-wrapper .table-striped > tbody > tr:nth-of-type(even) > td,
+.premium-table-wrapper .table > tbody > tr > td {
+  background: var(--color-surface);
+}
+
+.premium-table-wrapper .table > tbody > tr:hover > td {
+  background: rgba(158, 43, 46, 0.045);
+}
+
+.premium-table-wrapper .table > tbody > tr > td:last-child .premium-actions {
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 0.4rem;
+}
+
+.premium-table-wrapper .table > tbody > tr > td:last-child .premium-actions .js-delete-form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.premium-table-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.95rem 1.2rem;
+  background: var(--color-beige-soft);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.premium-table-header h2,
+.premium-table-header h3,
+.premium-table-header h5 {
+  margin: 0;
+  font-weight: 600;
+  font-size: var(--font-size-card);
+  color: var(--color-text);
+}
+
+.avatar-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  flex-shrink: 0;
+  background: var(--color-gold-soft);
+  border: 1px solid rgba(182, 154, 98, 0.4);
+  color: var(--color-bronze);
+}
+
+/* ============================================================
+   15. FACIAL RECOGNITION INTERFACE
+   Presentation only â€” no change to detection, matching or capture logic.
+   ============================================================ */
+.checkin-page {
+  min-height: calc(100vh - var(--header-height) - 3.5rem);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-bottom: 2rem;
+  background: linear-gradient(160deg, rgba(245, 240, 231, 0.55) 0%, rgba(216, 197, 165, 0.18) 100%);
+  border-radius: var(--radius-card);
+}
+
+.checkin-card {
+  width: 100%;
+  max-width: 940px;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  color: var(--color-text);
+}
+
+.checkin-card-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.35rem 1.6rem;
+  background: transparent;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.checkin-card-header::after {
+  content: '';
+  position: absolute;
+  left: 1.6rem;
+  bottom: -1px;
+  width: 56px;
+  height: 2px;
+  border-radius: 2px;
+  /* Crimson â†’ Gold signature rule */
+  background: var(--accent-rule);
+}
+
+.checkin-card-header h2,
+.checkin-card-header h3 {
+  margin: 0;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.3;
+}
+
+.checkin-card-header p {
+  margin: 0.2rem 0 0;
+  font-size: var(--font-size-support);
+  color: var(--color-text-secondary);
+}
+
+/* --- Camera viewport: clean frame, bronze edge, correct 4:3 ratio --- */
+.checkin-viewport {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #241C14;
+  border: 1px solid var(--color-bronze);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin: 1.25rem auto 0;
+  max-width: 720px;
+  box-shadow: 0 10px 34px rgba(73, 60, 44, 0.18);
+}
+
+.checkin-viewport video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transform: scaleX(-1);
+}
+
+.checkin-viewport canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* #canvasPreview is a capture buffer â€” never shown */
+#canvasPreview {
+  display: none !important;
+}
+
+.checkin-viewport-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  background: rgba(36, 28, 20, 0.62);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 500;
+  text-align: center;
+  padding: 1.5rem;
+  z-index: 5;
+}
+
+.checkin-viewport-overlay i {
+  font-size: 2.4rem;
+  color: var(--color-gold);
+}
+
+.checkin-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 1.15rem;
+  margin: 1.25rem auto 0;
+  max-width: 720px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.checkin-message {
+  margin: 0 auto 1rem;
+  max-width: 720px;
+}
+
+.checkin-results {
+  max-width: 720px;
+  margin: 0 auto;
+  max-height: 380px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0 1.25rem 1.5rem;
+}
+
+/* Result card markup is generated by attendance.js â€” class names are contractual */
+.checkin-result-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--color-gold);
+  border-radius: var(--radius-lg);
+  padding: 0.85rem 1rem;
+  box-shadow: var(--shadow-sm);
+  animation: slideUp 300ms ease both;
+  color: var(--color-text);
+}
+
+.checkin-result-header {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.checkin-result-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-success-soft);
+  color: var(--color-success-ink);
+  border: 1px solid rgba(46, 125, 91, 0.3);
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.checkin-result-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  font-size: var(--font-size-support);
+  color: var(--color-text-muted);
+}
+
+.checkin-result-meta strong {
+  color: var(--color-text);
+}
+
+.checkin-result-time {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-muted);
+}
+
+/* --- Enrollment viewfinder --- */
+.face-viewfinder {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  max-width: 560px;
+  margin: 0 auto;
+  background: #241C14;
+  border: 1px solid var(--color-bronze);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  box-shadow: 0 10px 34px rgba(73, 60, 44, 0.18);
+}
+
+/* --- Enrollment viewfinder stacking ---
+   Explicit order inside the frame:
+     1  video / captured still
+     2  faceCanvas â€” tracking boxes, drawn over the live feed only
+     3  .face-viewfinder-overlay â€” the "camera off" / error message
+   These were previously a mix of static and positioned elements, so the
+   painting order was whatever the engine happened to pick: the overlay
+   landed on top of the captured still, and tracking rectangles survived
+   over the photo because nothing ever hid faceCanvas. */
+.face-viewfinder > video,
+.face-viewfinder > #imgPreview {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  z-index: 1;
+}
+
+/* The live feed reads as a mirror; the captured still must NOT, or the
+   stored photo is flipped and the encoder sees a mirrored face. */
+.face-viewfinder > video {
+  transform: scaleX(-1);
+}
+
+/* The absolute positioning above out-specifies a bare [hidden] rule, so
+   restate it: JS toggles `hidden` on the video and the preview. */
+.face-viewfinder > [hidden] {
+  display: none;
+}
+
+.face-viewfinder > #faceCanvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 2;
+  display: block;
+}
+
+/* The tracking canvas only belongs over a live feed. camera.js toggles
+   this via the .is-tracking class; when the camera stops, the last frame
+   of boxes is cleared instead of hanging over the captured still. */
+.face-viewfinder > #faceCanvas:not(.is-tracking) {
+  display: none;
+}
+
+.face-viewfinder-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  background: rgba(36, 28, 20, 0.62);
+  color: rgba(255, 255, 255, 0.92);
+  font-weight: 500;
+  text-align: center;
+  padding: 1.5rem;
+}
+
+.face-viewfinder-overlay i {
+  font-size: 2.2rem;
+  color: var(--color-gold);
+}
+
+.face-thumbnail-strip {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+/* Captured-still thumbnails.
+   The thumbnail is a div containing an <img> that has no intrinsic size,
+   so the div must clip it. Without overflow:hidden the full-size data-URL
+   image spilled out over the modal instead of sitting in its 66px tile â€”
+   and object-fit on the div itself did nothing, because object-fit only
+   applies to replaced elements. */
+.face-thumb {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  flex: 0 0 66px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--color-gold);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-sm);
+  animation: thumbPop 260ms ease both;
+}
+
+.face-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* --- Captured photos reviewed inside the form ---
+   Mirrors the modal strip so the employee can confirm what will be
+   saved before submitting. Hidden entirely until at least one capture
+   exists, so the section does not open with an empty box. */
+.capture-review {
+  display: none;
+}
+
+.capture-review.is-visible {
+  display: block;
+}
+
+.capture-review-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.65rem;
+}
+
+.capture-count {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 24px;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--gold-hairline);
+  background: var(--color-crimson-soft);
+  color: var(--color-crimson-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.capture-strip {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  padding: 0.75rem;
+  border: 1px dashed var(--color-border-hover);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+/* Placeholder tile keeps the strip the same height while under quota */
+.capture-slot {
+  width: 66px;
+  height: 66px;
+  flex: 0 0 66px;
+  border-radius: var(--radius-md);
+  border: 1px dashed var(--color-beige);
+  background: repeating-linear-gradient(45deg,
+    rgba(216, 197, 165, 0.10) 0 6px,
+    rgba(216, 197, 165, 0.02) 6px 12px);
+}
+
+/* ============================================================
+   Camera permission prompt â€” a centred popup.
+   Presented as a real dialog (as asked), but deliberately
+   dismissible: no focus trap, and clicking the backdrop or pressing
+   Escape closes it. Dismissing never counts as consent, so nothing
+   is blocked â€” and it simply comes back the next time the camera is
+   needed while permission is still missing.
+   ============================================================ */
+.camera-permission-prompt {
+  position: fixed;
+  inset: 0;
+  z-index: 1900;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(48, 38, 28, 0.42);
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+
+.camera-permission-prompt.is-visible {
+  display: flex;
+  animation: permissionFadeIn 180ms ease-out both;
+}
+
+.camera-permission-card {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 430px;
+  padding: 1.6rem 1.6rem 1.35rem;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--gold-hairline);
+  background: var(--color-surface);
+  box-shadow: 0 28px 70px rgba(48, 38, 28, 0.34), var(--glass-rim);
+  animation: permissionPopIn 240ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Close affordance â€” the popup must never trap the user */
+.camera-permission-close {
+  position: absolute;
+  top: 0.85rem;
+  right: 0.85rem;
+  width: 30px;
+  height: 30px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-muted);
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.camera-permission-close:hover {
+  background: var(--color-crimson-soft);
+  color: var(--color-crimson-ink);
+}
+
+.camera-permission-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin-bottom: 0.7rem;
+  padding-right: 2rem;
+}
+
+.camera-permission-icon {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  border-radius: 13px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.25rem;
+  background: var(--color-crimson-soft);
+  border: 1px solid var(--gold-hairline);
+  color: var(--color-crimson);
+}
+
+.camera-permission-title {
+  display: block;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 1.3;
+  color: var(--color-text);
+}
+
+.camera-permission-reason {
+  display: block;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-text-secondary);
+  margin-top: 0.2rem;
+}
+
+.camera-permission-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 0.9rem;
+}
+
+.camera-permission-rows:empty {
+  display: none;
+  margin-bottom: 0;
+}
+
+.camera-permission-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+}
+
+.camera-permission-row-icon {
+  font-size: 1rem;
+  color: var(--color-crimson);
+  line-height: 1.5;
+}
+
+.camera-permission-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.camera-permission-row-label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--color-text);
+  line-height: 1.35;
+}
+
+.camera-permission-row-detail {
+  font-size: 12.5px;
+  color: var(--color-text-muted);
+  line-height: 1.4;
+}
+
+.camera-permission-status {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--color-text-muted);
+  margin-bottom: 1rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+  border: 1px solid var(--color-border);
+}
+
+.camera-permission-status:empty {
+  display: none;
+}
+
+.camera-permission-status.is-error {
+  color: var(--color-danger-ink);
+  background: var(--color-danger-soft);
+  border-color: rgba(196, 69, 69, 0.28);
+}
+
+.camera-permission-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.camera-permission-actions .btn {
+  flex: 1 1 auto;
+}
+
+@keyframes permissionFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes permissionPopIn {
+  from { opacity: 0; transform: translateY(16px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ============================================================
+   Registration overlay
+   Face encoding runs on CPU for every captured angle, so a real
+   request can sit for 20-40 seconds. A bare spinner that long reads
+   as a frozen page; the staged checklist tells the user it is alive.
+   ============================================================ */
+.register-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: rgba(36, 28, 20, 0.62);
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+}
+
+.register-overlay.is-active {
+  display: flex;
+}
+
+.register-overlay-card {
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  max-width: 420px;
+  padding: 2rem 1.85rem;
+  border-radius: var(--radius-card);
+  border: 1px solid var(--gold-hairline);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-premium-lg), var(--glass-rim);
+  text-align: center;
+}
+
+/* Slowly rotating conic ring around the mark */
+.register-spinner {
+  position: relative;
+  width: 66px;
+  height: 66px;
+  margin: 0 auto 1.15rem;
+}
+
+.register-spinner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(from 0deg,
+    transparent 0deg,
+    var(--color-crimson) 120deg,
+    var(--color-gold) 240deg,
+    transparent 360deg);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 4px), #000 calc(100% - 4px));
+  animation: registerSpin 1.15s linear infinite;
+}
+
+.register-spinner::after {
+  content: '';
+  position: absolute;
+  inset: 14px;
+  border-radius: 50%;
+  background: var(--color-surface);
+  box-shadow: inset 0 1px 3px rgba(73, 60, 44, 0.18);
+}
+
+@keyframes registerSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Staged progress list */
+.register-steps {
+  list-style: none;
+  margin: 0 0 1.15rem;
+  padding: 0;
+  text-align: left;
+}
+
+.register-step {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.4rem 0;
+  font-size: 13.5px;
+  color: var(--color-text-muted);
+  transition: color var(--transition-base);
+}
+
+.register-step-dot {
+  flex: 0 0 20px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--color-beige);
+  background: var(--color-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  color: transparent;
+  transition: all var(--transition-base);
+}
+
+.register-step.is-active {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.register-step.is-active .register-step-dot {
+  border-color: var(--color-crimson);
+  box-shadow: 0 0 0 3px var(--color-crimson-ring);
+  animation: pulseSoft 1.3s ease-in-out infinite;
+}
+
+.register-step.is-done {
+  color: var(--color-text-secondary);
+}
+
+.register-step.is-done .register-step-dot {
+  border-color: var(--color-success);
+  background: var(--color-success);
+  color: #FFFFFF;
+}
+
+@keyframes pulseSoft {
+  0%, 100% { opacity: 0.45; transform: scale(0.9); }
+  50%      { opacity: 1; transform: scale(1.1); }
+}
+
+/* Indeterminate bar â€” honest, since the real duration depends on the
+   number of angles and the CPU encoder. */
+.register-bar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--color-beige-soft);
+  overflow: hidden;
+}
+
+.register-bar::after {
+  content: '';
+  display: block;
+  height: 100%;
+  width: 38%;
+  border-radius: inherit;
+  background: var(--accent-rule);
+  animation: registerSlide 1.5s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes registerSlide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(320%); }
+}
+
+/* ============================================================
+   Enrollment step tracker
+   Markup order is: .face-step-item, .face-step-line, .face-step-item, ... */
+.face-step-track {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 1.25rem;
+  padding: 0 0.25rem;
+  max-width: 560px;
+}
+
+.face-step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  flex: 1 1 0;
+  text-align: center;
+  min-width: 0;
+}
+
+.face-step-dot {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-surface);
+  border: 2px solid var(--color-border-hover);
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 700;
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.face-step-item.active .face-step-dot {
+  border-color: var(--color-primary);
+  color: var(--color-primary);
+  background: var(--color-primary-soft);
+  box-shadow: 0 0 0 4px rgba(120, 96, 68, 0.12);
+}
+
+.face-step-item.completed .face-step-dot {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.face-step-item .face-step-label,
+.face-step-item > small {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  line-height: 1.3;
+}
+
+.face-step-item.active .face-step-label,
+.face-step-item.active > small,
+.face-step-item.completed .face-step-label,
+.face-step-item.completed > small {
+  color: var(--color-text);
+}
+
+.face-step-line {
+  flex: 0 0 20px;
+  height: 2px;
+  background: var(--color-border);
+  transition: background var(--transition-base);
+}
+
+.face-step-item.completed + .face-step-line {
+  background: var(--color-gold);
+}
+
+.face-step-line:last-child {
+  display: none;
+}
+
+/* ============================================================
+   16. MODALS
+   ============================================================ */
+.modal-backdrop {
+  background: rgba(48, 38, 28, 0.52);
+}
+
+/* Opaque on purpose.
+   A backdrop-filter here was compositing the modal onto Bootstrap's flat
+   dark .modal-backdrop: blurring a flat colour only desaturates it, so the
+   entire panel washed out to grey and drained the crimson/gold accents
+   inside it. There is nothing behind the modal worth refracting anyway â€”
+   the backdrop is a solid colour. Legibility also wins outright here,
+   since this panel holds a live camera feed. */
+.modal-content {
+  background: var(--color-surface);
+  border: 1px solid var(--gold-hairline);
+  border-radius: var(--radius-card);
+  box-shadow: 0 24px 64px rgba(48, 38, 28, 0.34);
+  color: var(--color-text);
+  overflow: hidden;
+}
+
+/* Face enrollment panel â€” matches the premium cards it sits inside. */
+.face-modal {
+  position: relative;
+}
+
+/* Full-width crimsonâ†’gold crest across the top of the panel. */
+.face-modal::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent-rule);
+  z-index: 5;
+}
+
+.face-modal .modal-header {
+  background: linear-gradient(180deg, #FDFBF7 0%, var(--color-surface) 100%);
+}
+
+.face-modal .modal-footer {
+  background: var(--color-surface-alt);
+}
+
+.face-modal .modal-body {
+  background: var(--color-surface);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.25rem 1.6rem;
+  background: transparent;
+  border-bottom: 1px solid var(--color-border);
+  position: relative;
+}
+
+.modal-header::after {
+  content: '';
+  position: absolute;
+  left: 1.6rem;
+  bottom: -1px;
+  width: 56px;
+  height: 2px;
+  border-radius: 2px;
+  /* Crimson â†’ Gold signature rule */
+  background: var(--accent-rule);
+}
+
+.modal-title {
+  font-size: var(--font-size-card);
+  font-weight: 600;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.modal-body {
+  padding: 1.5rem;
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  line-height: 1.65;
+}
+
+.modal-body h3,
+.modal-body h4,
+.modal-body h5 {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  padding: 1.2rem 1.6rem;
+  background: transparent;
+  border-top: 1px solid var(--color-border);
+}
+
+.modal-dialog {
+  max-width: 560px;
+  margin: 1.75rem auto;
+}
+
+.modal-dialog-centered {
+  display: flex;
+  align-items: center;
+  min-height: calc(100vh - 3.5rem);
+}
+
+.modal-lg { max-width: 780px; }
+.modal-xl { max-width: 1000px; }
+
+#termsModal .modal-body {
+  max-height: 55vh;
+  overflow-y: auto;
+  font-size: 13.5px;
+}
+
+#termsModal .modal-body h3 {
+  font-size: 15px;
+  margin-top: 1.1rem;
+  margin-bottom: 0.4rem;
+  color: var(--color-primary);
+}
+
+#registerFaceModal .modal-content {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+/* ============================================================
+   17. LIST GROUPS, MAP & MISC
+   ============================================================ */
+.list-group {
+  display: flex;
+  flex-direction: column;
+  padding-left: 0;
+  margin-bottom: 0;
+  border-radius: var(--radius-lg);
+}
+
+.list-group-item {
+  position: relative;
+  display: block;
+  padding: 0.75rem 1.1rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 14px;
+  border-radius: var(--radius-md) !important;
+  margin-bottom: 0.35rem;
+  transition: all var(--transition-fast);
+}
+
+.list-group-item:hover {
+  background: var(--color-surface-alt);
+  border-color: var(--color-border-hover);
+  color: var(--color-text);
+}
+
+.list-group-item-action {
+  width: 100%;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+.list-group-item.active {
+  background: var(--color-sidebar-active);
+  border-color: var(--color-gold);
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.repeat-days-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+  gap: 0.5rem;
+}
+
+.repeat-days-list .list-group-item {
+  text-align: center;
+  margin-bottom: 0;
+  cursor: pointer;
+  user-select: none;
+  padding: 0.55rem 0.4rem;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.repeat-days-list .list-group-item.active {
+  background: var(--color-primary);
+  border-color: var(--color-primary);
+  color: #FFFFFF;
+}
+
+.js-delete-form {
+  display: inline;
+}
+
+form.d-inline {
+  display: inline;
+}
+
+#map {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  z-index: 1;
+}
+
+.leaflet-container {
+  font-family: inherit;
+  background: var(--color-surface-alt);
+}
+
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: var(--color-surface);
+  color: var(--color-text);
+  box-shadow: var(--shadow-md);
+}
+
+/* Leaflet wraps a divIcon's html in a div carrying this className (it
+   replaces `leaflet-div-icon`), so the wrapper must stay transparent or it
+   paints a second dot behind the one in the icon's html. */
+.center-icon,
+.radius-handle,
+.current-location {
+  background: transparent;
+  border: none;
+}
+
+/* ============================================================
+   18. PRIVACY
+   ============================================================ */
+.privacy-container {
+  max-width: 860px;
+  margin: 0 auto;
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-lg);
+  padding: 2rem 2.25rem;
+  color: var(--color-text);
+}
+
+.privacy-meta {
+  padding-bottom: 1.15rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+}
+
+.privacy-meta h1,
+.privacy-meta h2 {
+  margin: 0 0 0.35rem;
+  font-size: var(--font-size-page);
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.privacy-body {
+  font-size: 14px;
+  line-height: 1.75;
+  color: var(--color-text-secondary);
+}
+
+.privacy-body h2,
+.privacy-body h3 {
+  font-size: var(--font-size-section);
+  font-weight: 600;
+  color: var(--color-text);
+  margin-top: 1.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.privacy-body strong {
+  color: var(--color-text);
+  font-weight: 600;
+}
+
+.privacy-body p:last-child {
+  margin-bottom: 0;
+}
+
+/* ============================================================
+   19. LOGIN PAGE
+   Login page: bgloginn.png (see .login-body further down).
+   ============================================================ */
+.login-body {
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  position: relative;
+  /* v4: cache-bust so the swap from the City Hall photo is picked up
+     immediately instead of waiting on the browser image cache. */
+  background: url('/images/bgbg.png?v=B5FC7D6F') no-repeat center center fixed;
+  background-size: cover;
+  position: relative;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Warm gradient wash â€” tuned to keep the City Hall facade and clock tower
+   clearly recognisable instead of dimming the photograph. */
+.login-body::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(105deg, rgba(245, 240, 231, 0.46) 0%, rgba(245, 240, 231, 0.14) 48%, rgba(120, 96, 68, 0.14) 100%),
+    linear-gradient(180deg, rgba(73, 60, 44, 0.22) 0%, rgba(73, 60, 44, 0.02) 42%, rgba(73, 60, 44, 0.20) 100%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Heritage-gold vignette */
+.login-body::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 110%, rgba(182, 154, 98, 0.22) 0%, transparent 62%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.login-shape {
+  display: none;
+}
+
+.login-wrapper {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2.5rem 1.5rem;
+  position: relative;
+  z-index: 1060;
+}
+
+.login-wrapper main {
+  flex: none;
+  padding: 0 !important;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.login-card {
+  position: relative;
+  isolation: isolate;
+  --login-card-radius: var(--radius-2xl);
+  /* Stronger blur than the app cards: this panel sits directly on the
+     photograph, so it needs to defocus the busiest part of the image. */
+  backdrop-filter: blur(28px) saturate(140%);
+  -webkit-backdrop-filter: blur(28px) saturate(140%);
+  width: 100%;
+  max-width: 440px;
+  padding: 2.5rem 2.25rem;
+  /* Light frosted ivory: readable espresso text over the photograph */
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid var(--gold-hairline);
+  border-radius: var(--login-card-radius);
+  box-shadow: var(--shadow-premium-lg), var(--glass-rim);
+  color: var(--color-text);
+  animation: loginEnter 520ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Neoclassical cornice in the four heritage colours.
+   The strip is 3px tall, so any top corner radius is clamped to ~1.5px by the
+   browser and can never trace the card's 26px corner. Insetting by the radius
+   instead makes the strip span exactly the flat run between the two curves,
+   so its ends meet the tangents with no overhang. */
+.login-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: var(--login-card-radius);
+  right: var(--login-card-radius);
+  height: 3px;
+  background: var(--accent-rule);
+  border-radius: 0 0 2px 2px;
+}
+
+/* Specular highlight + grain for the login panel. Separate rules from
+   .login-card::before, which is the crimson signature rule along the top. */
+.login-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--glass-specular);
+  z-index: -2;
+  pointer-events: none;
+}
+
+.login-card .glass-grain-layer {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-image: var(--glass-grain);
+  background-size: 140px 140px;
+  opacity: var(--glass-grain-opacity);
+  z-index: -1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+/* --- Login status panel ---
+   The sign-in feedback (a rejected attempt, or a success message) was bare
+   coloured text with no surface, so it read as a stray line of red on a frosted
+   card. It is now a tinted glass panel: the same material as the card it sits
+   on, carrying its own hue, with a status bar down the leading edge and the
+   Bootstrap status icon inherited from .alert::before.
+
+   Two selectors rather than a class, because the views mark these up with
+   Bootstrap's own utilities â€” the success one is .alert.alert-success and the
+   failure one is the asp-validation-summary div, which has no status class at
+   all. Both are scoped to .login-card so the admin alert styling is untouched. */
+.login-card .alert,
+.login-card .validation-summary-errors {
+  position: relative;
+  margin-bottom: 1.15rem;
+  /* Left padding clears the absolutely-positioned status icon at left:1rem,
+     and the 3px status bar that runs down the leading edge. */
+  padding: 0.85rem 1rem 0.85rem 2.5rem;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  border-radius: var(--radius-lg);
+  border: 1px solid transparent;
+  /* Tinted rather than solid: enough hue to read as a status, translucent
+     enough that the card's own blur still does the work behind it. */
+  backdrop-filter: blur(12px) saturate(150%);
+  -webkit-backdrop-filter: blur(12px) saturate(150%);
+  animation: statusSlideIn 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Status bar down the leading edge. */
+.login-card .alert::after,
+.login-card .validation-summary-errors::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 10px;
+  bottom: 10px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+}
+
+/* The icon the base .alert::before supplies, pulled to the status colour and
+   nudged in so it sits inside the bar rather than beside it. */
+.login-card .alert::before {
+  left: 0.85rem;
+  font-size: 1rem;
+}
+
+.login-card .alert-success {
+  color: #1E4D3A !important;
+  background: linear-gradient(180deg,
+    rgba(46, 125, 91, 0.14) 0%, rgba(255, 255, 255, 0.62) 100%);
+  border-color: rgba(46, 125, 91, 0.34);
+  box-shadow: 0 6px 18px rgba(46, 125, 91, 0.12), var(--glass-rim);
+}
+
+.login-card .alert-success::before,
+.login-card .alert-success::after {
+  color: var(--color-success);
+  background: var(--color-success);
+}
+
+.login-card .validation-summary-errors {
+  /* No absolute icon here â€” the glyph is inline in each <li> â€” so the padding
+     only has to clear the 3px status bar, not a 1rem icon offset. */
+  padding-left: 1rem;
+  color: #7E2A29 !important;
+  background: linear-gradient(180deg,
+    rgba(178, 59, 59, 0.14) 0%, rgba(255, 255, 255, 0.62) 100%);
+  border-color: rgba(178, 59, 59, 0.34);
+  box-shadow: 0 6px 18px rgba(178, 59, 59, 0.12), var(--glass-rim);
+}
+
+.login-card .validation-summary-errors::after {
+  background: var(--color-red);
+}
+
+/* The summary renders a plain <ul>; flatten it to match the alert's single
+   line box so the panel has one clean edge rather than browser list indents. */
+.login-card .validation-summary-errors ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.login-card .validation-summary-errors li + li {
+  margin-top: 0.3rem;
+}
+
+.login-card .validation-summary-errors li::before {
+  content: '\F26A';
+  font-family: 'bootstrap-icons';
+  margin-right: 0.5rem;
+  color: var(--color-red);
+}
+
+/* Arrives with the message rather than popping. */
+@keyframes statusSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-card .login-brand {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.login-card .login-logo {
+  width: 62px;
+  height: 62px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 0.9rem auto;
+  /* No drop shadow on the logo mark */
+  filter: none;
+  box-shadow: none;
+}
+
+/* Inside the row the auto centring and block flow are replaced by flex
+   alignment, so the base margins are reset. */
+.login-card .login-title {
+  font-size: 1.85rem;
+  font-weight: 700;
+  color: var(--color-text);
+  letter-spacing: -0.02em;
+  margin-bottom: 0.2rem;
+  line-height: 1.2;
+}
+
+.login-card .login-subtitle {
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.login-card .login-org {
+  color: var(--color-primary);
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  margin-top: 0.3rem;
+}
+
+/* Short accent rule between brand and form */
+.login-card hr {
+  border: 0;
+  height: 2px;
+  background: var(--accent-rule);
+  opacity: 0.7;
+  margin: 1.1rem 0 1.4rem;
+}
+
+/* Portal identifier â€” which sign-in surface this is */
+.portal-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 24px;
+  padding: 0 0.65rem;
+  margin-bottom: 0.75rem;
+  border: 1px solid var(--gold-hairline);
+  border-radius: 999px;
+  background: var(--color-crimson-soft);
+  color: var(--color-crimson-ink);
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.login-card h3 {
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.login-card .text-muted {
+  color: var(--color-text-muted) !important;
+}
+
+.login-card .text-danger {
+  font-size: 0.9rem;
+  color: var(--color-danger-ink) !important;
+}
+
+.login-card .form-label {
+  color: var(--color-text);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.login-card .form-control {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--color-beige);
+  color: var(--color-text);
+  font-size: 14.5px;
+  min-height: 46px;
+}
+
+.login-card .form-control::placeholder {
+  color: #A2958A;
+}
+
+.login-card .form-control:focus {
+  border-color: var(--color-crimson);
+  background: #FFFFFF;
+  box-shadow: 0 0 0 3px var(--color-crimson-ring);
+}
+
+.login-card .input-group-text {
+  background: rgba(216, 197, 165, 0.30);
+  border: 1px solid var(--color-beige);
+  color: var(--color-text-secondary);
+}
+
+.login-card .btn-primary {
+  width: 100%;
+  padding: 0.78rem 1.2rem;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+}
+
+.login-card .btn-primary:hover,
+.login-card .btn-primary:focus {
+  transform: translateY(-1px);
+}
+
+.login-card .alert {
+  font-size: 13.5px;
+  border-radius: var(--radius-md);
+}
+
+/* Understated clock-tower motif â€” used once, on the login page only */
+.clock-tower {
+  display: block;
+  width: 54px;
+  height: 74px;
+  margin: 0 auto 0.9rem auto;
+  color: var(--color-primary);
+  opacity: 0.55;
+}
+
+.login-card .login-footnote {
+  margin-top: 1.35rem;
+  padding-top: 0.95rem;
+  border-top: 1px solid var(--color-border);
+  font-size: 11.5px;
+  color: var(--color-text-muted);
+  text-align: center;
+  line-height: 1.5;
+}
+
+.login-card .login-footnote i {
+  color: var(--color-gold);
+  vertical-align: -0.1em;
+}
+
+/* ============================================================
+   20. WHEEL PICKER
+   ============================================================ */
+.wheel-picker {
+  position: relative;
+  user-select: none;
+}
+
+.wheel-window {
+  position: relative;
+  height: 200px;
+  overflow: hidden;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+}
+
+.wheel-window::before,
+.wheel-window::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 70px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.wheel-window::before {
+  top: 0;
+  background: linear-gradient(to bottom, var(--color-surface), rgba(255, 255, 255, 0));
+}
+
+.wheel-window::after {
+  bottom: 0;
+  background: linear-gradient(to top, var(--color-surface), rgba(255, 255, 255, 0));
+}
+
+.wheel-column {
+  height: 100%;
+  overflow-y: auto;
+  scroll-snap-type: y mandatory;
+  scrollbar-width: none;
+}
+
+.wheel-column::-webkit-scrollbar {
+  display: none;
+}
+
+.wheel-item {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  scroll-snap-align: center;
+  color: var(--color-text-muted);
+  font-size: 14px;
+  transition: color var(--transition-fast), font-weight var(--transition-fast);
+}
+
+.wheel-item.active {
+  color: var(--color-text);
+  font-weight: 700;
+  font-size: 16px;
+}
+
+/* ============================================================
+   21. ANIMATIONS
+   Motion vocabulary. Every entrance here is short and eased out;
+   anything longer or looping is reserved for ambient decoration
+   and is disabled under prefers-reduced-motion.
+   ============================================================ */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes thumbPop {
+  from { opacity: 0; transform: scale(0.86); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* Ambient float on the login clock tower. Slow enough to read as
+   deliberate rather than restless. */
+.clock-tower {
+  animation: floatY 7s ease-in-out infinite;
+}
+
+@keyframes loginEnter {
+  from { opacity: 0; transform: translateY(18px) scale(0.985); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* --- Staggered entrance -------------------------------------
+   Cards and list rows cascade in on load. --stagger-step is set
+   per element by :nth-child so the delay grows down the list
+   without inline styles. The cap on the last delay keeps long
+   tables from feeling like they are loading forever. */
+@keyframes riseIn {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-14px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.stagger > * {
+  animation: riseIn 420ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.stagger > *:nth-child(1)  { animation-delay: 40ms; }
+.stagger > *:nth-child(2)  { animation-delay: 80ms; }
+.stagger > *:nth-child(3)  { animation-delay: 120ms; }
+.stagger > *:nth-child(4)  { animation-delay: 160ms; }
+.stagger > *:nth-child(5)  { animation-delay: 200ms; }
+.stagger > *:nth-child(6)  { animation-delay: 240ms; }
+.stagger > *:nth-child(7)  { animation-delay: 280ms; }
+.stagger > *:nth-child(8)  { animation-delay: 320ms; }
+.stagger > *:nth-child(n+9) { animation-delay: 360ms; }
+
+/* Sidebar nav cascades independently of the content area */
+.sidebar-nav-stagger > * {
+  animation: slideInLeft 380ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.sidebar-nav-stagger > *:nth-child(1) { animation-delay: 60ms; }
+.sidebar-nav-stagger > *:nth-child(2) { animation-delay: 100ms; }
+.sidebar-nav-stagger > *:nth-child(3) { animation-delay: 140ms; }
+.sidebar-nav-stagger > *:nth-child(4) { animation-delay: 180ms; }
+.sidebar-nav-stagger > *:nth-child(5) { animation-delay: 220ms; }
+.sidebar-nav-stagger > *:nth-child(6) { animation-delay: 260ms; }
+.sidebar-nav-stagger > *:nth-child(n+7) { animation-delay: 300ms; }
+
+/* --- Ambient decoration ------------------------------------
+   Slow, low-contrast loops. These run indefinitely, so they are
+   the first thing removed for reduced-motion users. */
+@keyframes shimmerSweep {
+  0%   { transform: translateX(-120%); }
+  60%  { transform: translateX(120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* A single highlight that travels across the crimson signature
+   rule on the premium form header. */
+@keyframes ruleSheen {
+  0%, 100% { opacity: 0; transform: translateX(0) scaleX(0.4); }
+  50%      { opacity: 0.9; transform: translateX(220%) scaleX(1); }
+}
+
+@keyframes floatY {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-6px); }
+}
+
+.card,
+.table,
+.alert {
+  animation: fadeIn 320ms ease both;
+}
+
+/* ============================================================
+   22. SCROLLBAR
+   ============================================================ */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #F1EADE;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #D2C0A4;
+  border-radius: 999px;
+  border: 2px solid #F1EADE;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+/* ============================================================
+   23. RESPONSIVE
+   ============================================================ */
+@media (max-width: 1200px) {
+  .top-navbar-dept { font-size: 12px; }
+}
+
+@media (max-width: 992px) {
+  .top-navbar-sub { display: none; }
+}
+
+@media (max-width: 768px) {
+  /* Fewer, smaller orbs on small screens â€” large blurred surfaces are
+     the most expensive thing here to composite on mobile GPUs. */
+  .ambient-orb-1 { width: 210px; height: 210px; }
+  .ambient-orb-2 { width: 170px; height: 170px; }
+  .ambient-orb-3 { width: 190px; height: 190px; }
+  .ambient-orb-4,
+  .ambient-orb-5 { display: none; }
+
+  /* Off-canvas sidebar */
+  .sidebar {
+    transform: translateX(-100%);
+    box-shadow: 8px 0 32px rgba(73, 60, 44, 0.18);
+  }
+
+  .sidebar.show {
+    transform: translateX(0);
+  }
+
+  .sidebar.collapsed {
+    width: var(--sidebar-width);
+  }
+
+  .sidebar.collapsed .sidebar-title,
+  .sidebar.collapsed .sidebar-brand-meta,
+  .sidebar.collapsed .sidebar-text {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .sidebar.collapsed .sidebar-link {
+    justify-content: flex-start;
+    padding-left: 1.1rem;
+    padding-right: 1.1rem;
+    margin-right: 0.6rem;
+    width: calc(100% - 0.6rem);
+  }
+
+  /* Rail is full width on mobile, so the brand can stay a row */
+  .sidebar.collapsed .sidebar-brand {
+    flex-direction: row;
+    gap: 0.7rem;
+    padding: 1.25rem 1.1rem;
+  }
+
+  .main-content,
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+
+  .sidebar-mobile-toggler {
+    display: inline-flex;
+  }
+
+  .top-navbar {
+    padding: 0 1rem;
+    height: 60px;
+  }
+
+  .top-navbar-abbr { display: none; }
+
+  .top-navbar-dept {
+    font-size: 11.5px;
+    white-space: normal;
+  }
+
+  .main-content main {
+    padding: 1.25rem 1rem 0;
+  }
+
+  .page-title { font-size: 22px; }
+  .section-title { font-size: 17px; }
+
+  .welcome-banner-body { padding: 1.15rem 1.25rem; }
+  .welcome-banner-title { font-size: 18px; }
+
+  .card-body { padding: 1rem; }
+
+  .table > :not(caption) > * > * {
+    padding: 0.65rem 0.75rem;
+  }
+
+  .table thead th {
+    position: static;
+    font-size: 10px;
+  }
+
+  /* Readable tables on small screens: allow horizontal scroll, never overflow the page */
+  .table,
+  .premium-table-wrapper {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+
+  .premium-form-body { padding: 1.15rem; }
+  .premium-form-header { padding: 1.05rem 1.15rem; }
+  .premium-form-footer { padding: 1rem 1.15rem; }
+
+  .premium-form-footer .btn,
+  .premium-actions .btn {
+    flex: 1 1 auto;
+  }
+
+  .login-wrapper { padding: 1.5rem 1rem; }
+  .login-card { padding: 1.75rem 1.35rem; max-width: 420px; }
+  .login-card .login-title { font-size: 1.55rem; }
+
+  .login-body {
+    background-position: center 25%;
+  }
+
+  .checkin-page { padding-bottom: 1rem; }
+
+  .checkin-card-header { padding: 1rem 1.15rem; }
+
+  .checkin-viewport,
+  .checkin-controls,
+  .checkin-message,
+  .checkin-results {
+    max-width: 100%;
+  }
+
+  .checkin-viewport { margin-top: 1rem; }
+
+  .checkin-results {
+    max-height: 320px;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .face-step-track { gap: 0.15rem; }
+  .face-step-item .face-step-label,
+  .face-step-item > small { font-size: 9.5px; }
+  .face-step-dot { width: 28px; height: 28px; font-size: 0.75rem; }
+  .face-step-line { flex-basis: 10px; }
+
+  .modal-dialog { margin: 0.75rem; }
+  .modal-body { padding: 1.15rem; }
+  .modal-header, .modal-footer { padding: 1rem 1.15rem; }
+
+  .privacy-container { padding: 1.35rem 1.15rem; }
+
+  .page-header { margin-bottom: 1.15rem; }
+}
+
+@media (max-width: 576px) {
+  .top-navbar-dept { display: none; }
+
+  /* The department line is gone by this width, so the seal is the only identity
+     mark left in the bar â€” keep it, just trimmed to suit the shorter header. */
+  .top-navbar-seal { width: 28px; height: 28px; }
+
+  .top-navbar::after { height: 1px; }
+
+  .page-title { font-size: 19px; }
+
+  .premium-form-card,
+  .premium-section-card,
+  .card,
+  .login-card,
+  .checkin-card,
+  .welcome-banner {
+    border-radius: var(--radius-lg);
+  }
+
+  /* Keep the top gradient strip inset matching the reduced card radius. */
+  .login-card {
+    --login-card-radius: var(--radius-lg);
+  }
+
+  .premium-table-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-dropdown-btn {
+    padding: 0.4rem 0.7rem;
+    font-size: 13px;
+  }
+
+  .repeat-days-list {
+    grid-template-columns: repeat(auto-fit, minmax(74px, 1fr));
+  }
+
+  .stat-value { font-size: 25px; }
+}
+
+/* Grain and specular are decorative only â€” drop both in reduced-motion.
+   The blur and the surfaces themselves stay, since they are not motion. */
+@media (prefers-reduced-motion: reduce) {
+  .glass::before,
+  .glass-panel::before,
+  .glass-sm::before,
+  .glass::after,
+  .glass-panel::after,
+  .glass-sm::after,
+  .card::before,
+  .card::after,
+  .premium-form-card::before,
+  .premium-form-card::after,
+  .premium-section-card::before,
+  .login-card::after,
+  .glass-grain-layer {
+    background-image: none;
+    mix-blend-mode: normal;
+  }
+}
+
+/* ============================================================
+   24. REDUCED MOTION
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* The blanket rule above forces animation-duration to ~0 but does not
+     reset animation-fill-mode, so `both` can still strand an element at
+     the from-state. Clearing the named animations outright avoids a
+     permanently invisible page for reduced-motion users. */
+  .stagger > *,
+  .sidebar-nav-stagger > *,
+  .clock-tower,
+  .stat-value,
+  .login-card .alert,
+  .login-card .validation-summary-errors {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+
+  .reveal.reveal-ready {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+
+  .btn-shimmer::before,
+  .premium-form-header::before {
+    display: none !important;
+  }
+
+  .btn-ripple {
+    display: none !important;
+  }
+
+  /* Drift orbs: freeze them in place rather than hiding them, so the
+     colour wash that ties the palette together still reads. */
+  .ambient-orb {
+    animation: none !important;
+    will-change: auto;
+  }
+
+  .login-card {
+    animation: none;
+  }
+
+  .card:hover,
+  .card-interactive:hover,
+  .premium-form-card:hover,
+  .btn:hover,
+  .sidebar-link:hover,
+  .card:hover .stat-icon {
+    transform: none !important;
+  }
+
+  /* The pulse animation lives on the divIcon's inner div, so target that
+     rather than the (now transparent) wrapper. */
+  .current-location > div {
+    animation: none !important;
+  }
+}
+
+
+/* ============================================================
+   Automatic face capture â€” registration modal additions
+   ============================================================ */
+
+/* Keep the captured still aligned with the mirrored live feed so the
+   preview does not appear to flip when the image freezes. */
+.face-viewfinder > #imgPreview {
+  transform: scaleX(-1);
+}
+
+/* Face-positioning guide: subtle rounded frame centred in the viewfinder. */
+.face-position-guide {
+  position: absolute;
+  inset: 50%;
+  transform: translate(-50%, -50%);
+  width: 72%;
+  height: 78%;
+  max-width: 360px;
+  max-height: 300px;
+  border: 2px dashed rgba(255, 255, 255, 0.45);
+  border-radius: var(--radius-lg);
+  z-index: 4;
+  pointer-events: none;
+  box-shadow: 0 0 0 4px rgba(255, 255, 255, 0.10), inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+}
+
+/* Large 3 â†’ 2 â†’ 1 countdown overlay centred over the live frame. */
+.face-countdown {
+  position: absolute;
+  inset: 0;
+  z-index: 12;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: rgba(36, 28, 20, 0.55);
+}
+
+.face-countdown-ring {
+  position: relative;
+  width: 150px;
+  height: 150px;
+}
+
+.face-countdown-ring::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 6px solid rgba(255, 255, 255, 0.20);
+  border-top-color: var(--color-gold);
+  animation: countdownSpin 1s linear infinite;
+}
+
+.face-countdown-animate {
+  animation: countdownPulse 1s ease-in-out both;
+}
+
+.face-countdown-number {
+  font-size: 4.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #FFFFFF;
+  text-shadow: 0 2px 12px rgba(0, 0, 0, 0.45);
+  letter-spacing: -0.05em;
+}
+
+@keyframes countdownSpin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes countdownPulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.12); opacity: 0.9; }
+}
+
+/* Captured-photo review panel. */
+.face-captured-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 1rem 0.5rem;
+  text-align: center;
+}
+
+.face-captured-message {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--color-success-ink);
+  background: var(--color-success-soft);
+  border: 1px solid rgba(46, 125, 91, 0.35);
+  padding: 0.6rem 0.9rem;
+  border-radius: var(--radius-md);
+  font-size: 0.95rem;
+  font-weight: 600;
+  max-width: 100%;
+}
+
+.face-captured-message i {
+  font-size: 1.25rem;
+}
+
+.face-captured-message > div {
+  line-height: 1.4;
+}
+
+.face-captured-message > div span {
+  display: block;
+  font-weight: 500;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
+  margin-top: 0.15rem;
+}
+
+.face-captured-image {
+  width: 100%;
+  max-width: 420px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: #241C14;
+  overflow: hidden;
+  box-shadow: 0 8px 28px rgba(73, 60, 44, 0.16);
+}
+
+.face-captured-image img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+}
+
+/* Detection / enrollment status pill in the modal footer. */
+.face-status {
+  white-space: nowrap;
+}
+
+.face-status i {
+  font-size: 0.75rem;
+}
+
+.face-employee-context {
+  font-size: 0.85rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--color-text-muted);
+}
+
+.face-employee-context .face-employee-name {
+  color: var(--color-text);
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* Employee context shown in the modal header while the form fields live
+   outside the modal, so the administrator always knows who is being enrolled. */
+.face-modal .modal-header small {
+  display: block;
+  margin-top: 0.2rem;
+}
+
+/* Ensure the modal viewfinder keeps its ratio inside the modal. */
+.face-modal .face-viewfinder {
+  max-width: 520px;
+}
+
+/* Reduced motion: kill the countdown spin/pulse. */
+@media (prefers-reduced-motion: reduce) {
+  .face-countdown-ring::before { animation: none !important; }
+  .face-countdown-animate { animation: none !important; }
+}
+
+/* Current facial positioning instruction panel. */
+.face-instruction-panel {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 1rem 1.25rem;
+  background: var(--color-surface-alt);
+}
+
+.face-position-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  height: 24px;
+  padding: 0 0.7rem;
+  border-radius: 999px;
+  border: 1px solid var(--gold-hairline);
+  background: var(--color-crimson-soft);
+  color: var(--color-crimson-ink);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.face-position-title {
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.25rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.face-position-desc {
+  font-size: 0.95rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* Review panel shown once all five positions are captured. */
+.face-captured-all {
+  text-align: center;
+}
+
+/* Thumbnail states: captured vs pending. */
+.face-thumb.completed {
+  border-color: var(--color-success-ink);
+  background: var(--color-success-soft);
+}
+
+.face-thumb.empty {
+  border-color: var(--color-border-hover);
+  background: repeating-linear-gradient(45deg,
+    rgba(216, 197, 165, 0.10) 0 6px,
+    rgba(216, 197, 165, 0.02) 6px 12px);
+}
+
+/* Retake button overlaid on a captured thumbnail. */
+.position-retake {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  background: rgba(48, 38, 28, 0.55);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.face-thumb.completed:hover .position-retake {
+  display: inline-flex;
+}
+
+/* Complete Registration button. */
+.face-btn-complete {
+  font-weight: 600;
+}
+
+/* ============================================================
+   Final photo review screen
+   ============================================================ */
+.face-review-header {
+  margin-bottom: 1.5rem;
+}
+
+.face-review-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--color-text);
+  margin: 0 0 0.5rem;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.face-review-subtitle {
+  font-size: 0.9rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.face-review-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1rem;
+  justify-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.face-review-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: 0.6rem;
+  background: var(--color-surface);
+  cursor: pointer;
+  transition: border-color 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.face-review-slot:hover {
+  border-color: var(--color-primary);
+}
+
+.face-review-slot.selected {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 4px rgba(120, 96, 68, 0.15);
+  background: var(--color-primary-soft);
+}
+
+.face-review-image-wrap {
+  position: relative;
+  width: 140px;
+  height: 140px;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  background: #241C14;
+  border: 1px solid var(--color-border);
+}
+
+.face-review-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.face-review-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+  background: repeating-linear-gradient(45deg,
+    rgba(216, 197, 165, 0.10) 0 6px,
+    rgba(216, 197, 165, 0.02) 6px 12px);
+}
+
+.face-review-retake {
+  position: absolute;
+  top: 0.4rem;
+  right: 0.4rem;
+  display: none;
+  align-items: center;
+  gap: 0.25rem;
+  background: rgba(48, 38, 28, 0.6);
+  color: #FFFFFF;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.35rem 0.55rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  cursor: pointer;
+  z-index: 3;
+  backdrop-filter: blur(2px);
+}
+
+.face-review-slot.selected .face-review-retake {
+  display: inline-flex;
+}
+
+.face-review-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text);
+  text-align: center;
+  line-height: 1.25;
+}
+
+.face-review-slot.selected .face-review-label {
+  color: var(--color-primary-ink, var(--color-text));
+}
+
+.face-review-selection {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.face-review-selected-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.9rem;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-alt);
+}

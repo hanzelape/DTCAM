@@ -1,0 +1,20 @@
+[Unit]
+Description=Face Attendance ASP.NET Core App
+After=network.target mysql.service
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/faceattendance
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Environment=ASPNETCORE_URLS=http://127.0.0.1:5001
+EnvironmentFile=/opt/faceattendance/.env
+ExecStart=/usr/bin/dotnet /opt/faceattendance/FaceAttendanceSystem.dll
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

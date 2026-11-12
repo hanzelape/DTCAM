@@ -1,0 +1,49 @@
+@{
+    ViewData["Title"] = "My Attendance Records";
+    Layout = "_EmployeeLayout";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">My Attendance Records</h1>
+        <p class="page-subtitle">Your complete check-in history, including the recognition reliability recorded for each entry.</p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        @if (ViewBag.AttendanceRecords != null && ((List<FaceAttendanceSystem.Models.Attendance>)ViewBag.AttendanceRecords).Any())
+        {
+            <div class="premium-table-wrapper">
+                <table class="table table-striped mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Date / Time</th>
+                            <th scope="col">Schedule</th>
+                            <th scope="col">Status</th>
+                            <th scope="col">Detection Reliability</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var record in (List<FaceAttendanceSystem.Models.Attendance>)ViewBag.AttendanceRecords)
+                        {
+                            <tr>
+                                <td>@record.TimeRecorded.ToString("MMM dd, yyyy hh:mm tt")</td>
+                                <td class="fw-semibold">@record.Schedule?.Title</td>
+                                <td><partial name="_StatusBadge" model="@record.Status" /></td>
+                                <td>@(record.ConfidenceScore > 0 ? (record.ConfidenceScore * 100).ToString("0.0") + "%" : "N/A")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+        else
+        {
+            <div class="text-center py-4">
+                <i class="bi bi-journal-x d-block mb-2" style="font-size:1.75rem;color:var(--color-beige);"></i>
+                <p class="text-muted mb-0">No attendance records yet.</p>
+            </div>
+        }
+    </div>
+</div>

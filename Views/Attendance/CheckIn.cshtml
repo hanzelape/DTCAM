@@ -1,0 +1,109 @@
+@{
+    ViewData["Title"] = "Facial Recognition";
+}
+
+<div class="checkin-page">
+    <div class="checkin-card mx-auto">
+        <div class="checkin-card-header">
+            <div class="avatar-icon">
+                <i class="bi bi-camera"></i>
+            </div>
+            <div>
+                <h1 class="page-title" style="font-size:22px;">Facial Recognition</h1>
+                <p>Look at the camera to check in automatically. Multiple people can check in consecutively.</p>
+            </div>
+        </div>
+
+        <div class="checkin-viewport" id="checkinViewport">
+            <video id="videoCamera" width="640" height="480" autoplay playsinline hidden></video>
+            <canvas id="canvasPreview" style="display:none;"></canvas>
+            <canvas id="faceCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10;"></canvas>
+            <div class="checkin-viewport-overlay" id="viewfinderOverlay">
+                <i class="bi bi-camera"></i>
+                <span>Camera is off</span>
+            </div>
+        </div>
+
+        <div class="checkin-controls">
+            <button type="button" id="btnStartCamera" class="btn btn-primary" disabled>
+                <i class="bi bi-play-fill me-2"></i>Start Camera
+            </button>
+            <button type="button" id="btnStopCamera" class="btn btn-outline-secondary">
+                <i class="bi bi-stop-fill me-2"></i>Stop Camera
+            </button>
+        </div>
+
+        <p class="form-text text-center mt-3 mb-0">
+            <i class="bi bi-shield-check"></i>
+            Only attendance verification is performed. Recognition status is always shown with a text label.
+        </p>
+
+        <div id="messageArea" class="checkin-message alert" hidden></div>
+
+        <div id="resultContainer" class="checkin-results"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
+    <script src="~/js/camera.js" asp-append-version="true"></script>
+    <script src="~/js/attendance.js" asp-append-version="true"></script>
+    <script>
+        const btnStart = document.getElementById('btnStartCamera');
+        const btnStop = document.getElementById('btnStopCamera');
+        const video = document.getElementById('videoCamera');
+        const overlay = document.getElementById('viewfinderOverlay');
+
+        function setOverlay(icon, text, visible) {
+            if (!overlay) return;
+            overlay.innerHTML = '<i class="bi bi-' + icon + '"></i><span>' + text + '</span>';
+            overlay.style.display = visible ? 'flex' : 'none';
+        }
+
+        async function startCameraFlow() {
+            // Ask first. Resolves false (and shows the floating prompt) when
+            // permission is missing, instead of firing a dead start attempt.
+            const permitted = window.Permissions
+                ? await Permissions.ensure('camera', 'Facial recognition check-in needs the camera.')
+                : { camera: true };
+
+            if (!permitted || permitted.camera !== true) {
+                setOverlay('camera-video', 'Camera access needed — see the prompt', true);
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+                return;
+            }
+
+            video.hidden = false;
+            const result = await Camera.start('videoCamera', 'canvasPreview');
+
+            // Camera.start returns a result rather than throwing, so gate on it.
+            if (!result || !result.ok) {
+                setOverlay('exclamation-triangle', (result && result.reason) || 'The camera could not be started.', true);
+                video.hidden = true;
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+                return;
+            }
+
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            setOverlay('people', 'Scanning...', false);
+            Attendance.startScanning();
+        }
+
+        btnStart.addEventListener('click', startCameraFlow);
+
+        btnStop.addEventListener('click', () => {
+            Camera.stop();
+            Attendance.stopScanning();
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            video.hidden = true;
+            setOverlay('camera', 'Camera is off', true);
+        });
+
+        startCameraFlow();
+    </script>
+}

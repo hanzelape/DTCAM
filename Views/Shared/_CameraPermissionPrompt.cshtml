@@ -1,0 +1,34 @@
+@* Camera + location access popup. Offered once per login session, and again
+   whenever a camera or map feature is opened while access is still missing.
+   Dismissible on purpose: no focus trap, and closing never counts as consent. *@
+<div class="camera-permission-prompt"
+     id="cameraPermissionPrompt"
+     role="dialog"
+     aria-modal="false"
+     aria-labelledby="cameraPermissionTitle"
+     data-prompt-on-load="@(Context.Session.GetString("PromptPermissionsOnLoad") == "true" ? "true" : "false")">
+    <div class="camera-permission-card">
+        <button type="button" class="camera-permission-close" data-cp-dismiss aria-label="Close">
+            <i class="bi bi-x-lg" aria-hidden="true"></i>
+        </button>
+
+        <div class="camera-permission-head">
+            <span class="camera-permission-icon" aria-hidden="true">
+                <i class="bi bi-shield-lock"></i>
+            </span>
+            <div>
+                <span class="camera-permission-title" id="cameraPermissionTitle">Access needed</span>
+                <span class="camera-permission-reason" data-cp-reason>Grant access so camera and map features work.</span>
+            </div>
+        </div>
+
+        <div class="camera-permission-rows" data-cp-rows></div>
+
+        <p class="camera-permission-status" data-cp-status></p>
+
+        <div class="camera-permission-actions">
+            <button type="button" class="btn btn-outline-secondary" data-cp-dismiss>Not now</button>
+            <button type="button" class="btn btn-primary" data-cp-allow>Allow access</button>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,81 @@
+@model FaceAttendanceSystem.Models.Department
+@{
+    ViewData["Title"] = Model.Name;
+    var otherDepartments = ViewBag.OtherDepartments as IEnumerable<FaceAttendanceSystem.Models.Department> ?? Enumerable.Empty<FaceAttendanceSystem.Models.Department>();
+}
+
+<div class="premium-form-card">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-building"></i>
+        </div>
+        <div>
+            <h2>@Model.Name</h2>
+            <p>Employees in this department</p>
+        </div>
+    </div>
+
+    <div class="premium-form-body">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+            <a asp-action="Index" class="btn btn-outline-primary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Departments
+            </a>
+        </div>
+
+        <div class="premium-table-wrapper">
+            <table class="table table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Employee ID</th>
+                        <th scope="col">Full Name</th>
+                        <th scope="col">Attendance Rate</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end">Move To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ViewBag.Employees != null && ((IEnumerable<FaceAttendanceSystem.Models.Employee>)ViewBag.Employees).Any())
+                    {
+                        foreach (var emp in (IEnumerable<FaceAttendanceSystem.Models.Employee>)ViewBag.Employees)
+                        {
+                            <tr>
+                                <td>@emp.EmployeeId</td>
+                                <td class="fw-semibold">@emp.FullName</td>
+                                <td>@emp.AttendanceRate.ToString("0.0")%</td>
+                                <td>
+                                    @if (emp.IsActive)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i>Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i>Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <form asp-action="MoveEmployee" method="post" class="d-flex gap-2 justify-content-end">
+                                        <input type="hidden" name="employeeId" value="@emp.Id" />
+                                        <select name="newDepartmentId" class="form-select form-select-sm" style="width: auto; min-width: 160px;">
+                                            <option value="">Select department...</option>
+                                            @foreach (var dept in otherDepartments)
+                                            {
+                                                <option value="@dept.Id">@dept.Name</option>
+                                            }
+                                        </select>
+                                        <button type="submit" class="btn btn-sm btn-primary">Move</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="5" class="text-center text-muted py-4">No employees in this department.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

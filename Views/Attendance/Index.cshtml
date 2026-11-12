@@ -1,0 +1,51 @@
+@model IEnumerable<FaceAttendanceSystem.Models.Attendance>
+
+@{
+    ViewData["Title"] = "Attendance Records";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Attendance Records</h1>
+        <p class="page-subtitle">Complete log of facial recognition check-ins across all employees and schedules.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="CheckIn" class="btn btn-primary"><i class="bi bi-camera"></i> New Check-In</a>
+        <a asp-action="Today" class="btn btn-outline-primary"><i class="bi bi-calendar-check"></i> Today's Attendance</a>
+    </div>
+</div>
+
+<div class="premium-table-wrapper">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Date / Time</th>
+                <th scope="col">Employee</th>
+                <th scope="col">Schedule</th>
+                <th scope="col">Status</th>
+                <th scope="col">Detection Reliability</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No attendance records found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>@item.TimeRecorded.ToString("MMM dd, yyyy hh:mm tt")</td>
+                        <td class="fw-semibold">@item.Employee?.FullName</td>
+                        <td>@item.Schedule?.Title</td>
+                        <td><partial name="_StatusBadge" model="@item.Status" /></td>
+                        <td>@(item.ConfidenceScore > 0 ? (item.ConfidenceScore * 100).ToString("0.0") + "%" : "N/A")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

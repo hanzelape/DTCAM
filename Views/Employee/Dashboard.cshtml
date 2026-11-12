@@ -1,0 +1,105 @@
+@{
+    ViewData["Title"] = "Dashboard";
+    Layout = "_EmployeeLayout";
+    var banner = new FaceAttendanceSystem.ViewModels.WelcomeBannerViewModel
+    {
+        Name = ViewBag.EmployeeName as string ?? string.Empty,
+        Message = "Track your attendance, view your assigned schedules, and check in with facial recognition."
+    };
+}
+
+<partial name="_WelcomeBanner" model="banner" />
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-lg-3">
+        <div class="card text-center text-white bg-primary h-100">
+            <div class="card-body">
+                <h5 class="card-title">Attendance Rate</h5>
+                <div class="stat-value">@(((decimal)ViewBag.AttendanceRate).ToString("0.0"))%</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card text-center text-white bg-success h-100">
+            <div class="card-body">
+                <h5 class="card-title">Log Ins</h5>
+                <div class="stat-value">@ViewBag.TotalLogIns</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card text-center text-white bg-danger h-100">
+            <div class="card-body">
+                <h5 class="card-title">Absent</h5>
+                <div class="stat-value">@ViewBag.TotalAbsents</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-lg-3">
+        <div class="card text-center text-white bg-warning h-100">
+            <div class="card-body">
+                <h5 class="card-title">Late</h5>
+                <div class="stat-value">@ViewBag.TotalLates</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-lightning-charge"></i> Quick Actions
+            </div>
+            <div class="card-body">
+                <div class="d-flex gap-2 flex-wrap">
+                    <a asp-controller="Employee" asp-action="CheckIn" class="btn btn-primary"><i class="bi bi-camera"></i> Facial Recognition</a>
+                    <a asp-controller="Employee" asp-action="ChangePassword" class="btn btn-outline-primary"><i class="bi bi-key"></i> Change Password</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-journal-check"></i> Recent Log Ins</div>
+            <div class="card-body">
+                @if (ViewBag.RecentRecords != null && ((List<FaceAttendanceSystem.Models.Attendance>)ViewBag.RecentRecords).Any())
+                {
+                    <div class="premium-table-wrapper">
+                        <table class="table table-striped mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Date / Time</th>
+                                    <th scope="col">Schedule</th>
+                                    <th scope="col">Status</th>
+                                    <th scope="col">Detection Reliability</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var record in (List<FaceAttendanceSystem.Models.Attendance>)ViewBag.RecentRecords)
+                                {
+                                    <tr>
+                                        <td>@record.TimeRecorded.ToString("MMM dd, yyyy hh:mm tt")</td>
+                                        <td>@record.Schedule?.Title</td>
+                                        <td><partial name="_StatusBadge" model="@record.Status" /></td>
+                                        <td>@(record.ConfidenceScore > 0 ? (record.ConfidenceScore * 100).ToString("0.0") + "%" : "N/A")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+                else
+                {
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox d-block mb-2" style="font-size:1.75rem;color:var(--color-beige);"></i>
+                        <p class="text-muted mb-0">No recent log ins.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>

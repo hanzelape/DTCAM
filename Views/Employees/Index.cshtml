@@ -1,0 +1,374 @@
+@using System.Linq
+@using System.Text.Json
+@model IEnumerable<FaceAttendanceSystem.Models.Employee>
+
+@{
+    ViewData["Title"] = "Employees";
+}
+
+<div class="premium-form-card mb-4">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-people"></i>
+        </div>
+        <div>
+            <h2>Employees</h2>
+            <span id="employeeCountBadge" class="badge text-bg-secondary ms-2">@Model.Count() Employees</span>
+            <p>Manage employee accounts and view attendance summaries.</p>
+        </div>
+    </div>
+
+    <div class="premium-form-body">
+        <form asp-action="Index" method="get" class="mb-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control" placeholder="Search by name, ID, or department..." value="@ViewBag.Search" />
+                    </div>
+                </div>
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-primary">Search</button>
+                    @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                    {
+                        <a asp-action="Index" class="btn btn-secondary">Clear</a>
+                    }
+                </div>
+            </div>
+        </form>
+
+        <div class="d-flex justify-content-end mb-3">
+            <a asp-action="Create" class="btn btn-primary">
+                <i class="bi bi-person-plus me-2"></i>Register Employee
+            </a>
+        </div>
+
+        <div class="row g-3">
+            @foreach (var employee in Model)
+            {
+                var rate = employee.AttendanceRate;
+                var absent = employee.TotalAbsents;
+                var logIns = employee.TotalLogIns;
+                var lates = employee.TotalLates;
+
+                var circleColor = rate >= 80m ? "#2E7D5B" : rate >= 50m ? "#C58B32" : "#C44545";
+                var circleOffset = 251.32m - (251.32m * rate) / 100;
+
+                <div class="col-md-6 col-xl-4">
+                    <div class="card h-100 employee-card">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center gap-3 mb-3">
+                                <div class="position-relative flex-shrink-0" style="width:80px;height:80px;">
+                                    <svg width="80" height="80" viewBox="0 0 100 100" role="img" aria-label="Attendance rate @rate.ToString("0.0") percent">
+                                        <circle cx="50" cy="50" r="40" fill="none" stroke="#E5D9C8" stroke-width="8" />
+                                        <circle cx="50" cy="50" r="40" fill="none" stroke="@circleColor" stroke-width="8" stroke-linecap="round"
+                                                stroke-dasharray="251.32" stroke-dashoffset="@circleOffset"
+                                                transform="rotate(-90 50 50)" style="transition: stroke-dashoffset 0.5s ease;" />
+                                        <text x="50" y="55" text-anchor="middle" font-size="16" font-weight="700" fill="#493C2C">@rate.ToString("0.0")%</text>
+                                    </svg>
+                                </div>
+                                <div class="min-w-0">
+                                    <h5 class="card-title mb-1">@employee.FullName</h5>
+                                    <p class="text-muted mb-0">@employee.EmployeeId · DTCAM</p>
+                                </div>
+                            </div>
+
+                            <div class="d-flex gap-3 flex-wrap mb-2">
+                                <div class="text-center">
+                                    <small class="text-muted d-block">Log Ins</small>
+                                    <strong>@logIns</strong>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted d-block">Absent</small>
+                                    <strong>@absent</strong>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted d-block">Late</small>
+                                    <strong>@lates</strong>
+                                </div>
+                                <div class="text-center">
+                                    <small class="text-muted d-block">Status</small>
+                                    @if (employee.IsActive)
+                                    {
+                                        <span class="badge bg-success"><i class="bi bi-check-circle"></i>Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary"><i class="bi bi-dash-circle"></i>Inactive</span>
+                                    }
+                                </div>
+                            </div>
+
+                            <p class="text-muted mb-0 small">Registered @employee.RegisteredAt.ToString("MMM dd, yyyy")</p>
+                        </div>
+                        <div class="card-footer">
+                            <div class="d-flex gap-2">
+                                <a asp-action="Edit" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="bi bi-pencil me-1"></i>Edit
+                                </a>
+                                <a asp-action="Details" asp-route-id="@employee.Id" class="btn btn-sm btn-outline-primary flex-grow-1">
+                                    <i class="bi bi-eye me-1"></i>View
+                                </a>
+                                @if (employee.IsActive)
+                                {
+                                    <button type="button" class="btn btn-sm btn-danger w-100" onclick="openDeleteModal(this)" data-id="@employee.Id">
+                                        <i class="bi bi-person-x me-1"></i>Terminate
+                                    </button>
+                                }
+                                else
+                                {
+                                    <form asp-action="Reactivate" asp-route-id="@employee.Id" method="post" class="flex-grow-1 m-0" onsubmit="return confirm('Are you sure you want to reactivate this employee?');">
+                                        <button type="submit" class="btn btn-sm btn-success w-100">
+                                            <i class="bi bi-person-check me-1"></i>Reactivate
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Permanent deletion confirmation modal styling — consistent with the app's
+       heritage design system (crimson/red danger tones, espresso text). */
+    #deleteEmployeeModal .modal-header.text-bg-danger {
+        border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    }
+
+    #deleteEmployeeModal .modal-title {
+        color: #FFFFFF;
+        font-weight: 700;
+    }
+
+    #deleteEmployeeModal .modal-content {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+    }
+
+    #deleteEmployeeModal .modal-body .alert {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--color-danger-soft) !important;
+        color: var(--color-danger-ink) !important;
+        border: 1px solid var(--color-border) !important;
+        border-radius: var(--radius-md);
+        padding: 12px 16px !important;
+    }
+
+    #deleteEmployeeModal .modal-body .alert i {
+        flex-shrink: 0;
+        font-size: 1rem;
+    }
+
+    #deleteEmployeeModal .btn-danger:not(:disabled) {
+        background: var(--color-danger);
+        border-color: var(--color-danger);
+        color: #FFFFFF;
+        font-weight: 600;
+    }
+
+    #deleteEmployeeModal .btn-danger:not(:disabled):hover {
+        background: var(--color-red-deep);
+        border-color: var(--color-red-deep);
+        color: #FFFFFF;
+    }
+
+    #deleteEmployeeModal .btn-danger:disabled {
+        background: rgba(196, 69, 69, 0.35);
+        border-color: rgba(196, 69, 69, 0.35);
+        color: rgba(255, 255, 255, 0.6);
+        cursor: not-allowed;
+    }
+
+    #deleteEmployeeModal .bi-exclamation-triangle-fill {
+        color: #FFFFFF;
+    }
+
+    #deleteEmployeeModal .bi-trash3-fill {
+        color: #FFFFFF;
+    }
+
+    /* Fix icon overlap with adjacent text in badges and buttons */
+    .badge i,
+    .btn i {
+        margin-right: 0.4rem;
+        vertical-align: middle;
+    }
+
+    .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+</style>
+
+<!-- Permanent deletion confirmation modal. Consistent with the shared modal design (_TermsModal). -->
+<div class="modal fade" id="deleteEmployeeModal" tabindex="-1" aria-labelledby="deleteEmployeeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content border-0">
+            <div class="modal-header border-bottom text-bg-danger">
+                <h5 class="modal-title" id="deleteEmployeeModalLabel"><i class="bi bi-exclamation-triangle-fill me-2"></i>Permanently Delete Employee?</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p class="mb-3">Are you sure you want to terminate and permanently delete this employee? This action will permanently remove their profile, facial recognition enrollment, eligible attendance records, and all associated employee-specific information. This action cannot be undone.</p>
+
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted small"><i class="bi bi-person me-1"></i> Name</div>
+                    <div class="col-sm-8" id="deleteEmployeeNameValue"></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted small"><i class="bi bi-badge me-1"></i> Employee ID</div>
+                    <div class="col-sm-8" id="deleteEmployeeIdentifierValue"></div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-sm-4 text-muted small"><i class="bi bi-building me-1"></i> Department</div>
+                    <div class="col-sm-8" id="deleteEmployeeDepartmentValue"></div>
+                </div>
+
+                <div class="alert text-bg-danger border-0 p-2 mb-3" style="font-size: 0.9rem;">
+                    <i class="bi bi-shield-exclamation"></i> This action cannot be undone.
+                </div>
+
+                <input type="hidden" id="deleteTargetId" />
+                @Html.AntiForgeryToken()
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                <button type="button" class="btn btn-danger" id="deleteConfirmButton" onclick="submitDelete()">
+                    <i class="bi bi-trash3-fill me-1"></i> Yes, Permanently Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <script>
+        showToast(@Html.Raw(JsonSerializer.Serialize(TempData["Success"])), 'success');
+    </script>
+}
+@if (TempData["Error"] != null)
+{
+    <script>
+        showToast(@Html.Raw(JsonSerializer.Serialize(TempData["Error"])), 'danger');
+    </script>
+}
+
+@section Scripts {
+    <script>
+        (function () {
+            'use strict';
+
+            var confirmBtn = document.getElementById('deleteConfirmButton');
+
+            window.openDeleteModal = function (button) {
+                var card = button.closest('.employee-card');
+                var nameEl = card.querySelector('.card-title');
+                var metaEl = card.querySelector('.text-muted.mb-0');
+                var parts = (metaEl ? metaEl.textContent : '').split('\u00B7');
+
+                document.getElementById('deleteEmployeeNameValue').textContent = nameEl ? nameEl.textContent.trim() : '';
+                document.getElementById('deleteEmployeeIdentifierValue').textContent = parts.length > 0 ? parts[0].trim() : '';
+                document.getElementById('deleteEmployeeDepartmentValue').textContent = parts.length > 1 ? parts[1].trim() : '';
+                document.getElementById('deleteTargetId').value = button.getAttribute('data-id');
+
+                var modal = new bootstrap.Modal(document.getElementById('deleteEmployeeModal'));
+                modal.show();
+            };
+
+            window.submitDelete = function () {
+                var id = document.getElementById('deleteTargetId').value;
+                if (!id) {
+                    showToast('Deletion failed: no employee selected.', 'danger');
+                    return;
+                }
+
+                var btn = document.getElementById('deleteConfirmButton');
+                var originalHtml = btn.innerHTML;
+
+                btn.disabled = true;
+                btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Deleting...';
+
+                var formData = new FormData();
+                var tokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
+                if (tokenInput) formData.append('__RequestVerificationToken', tokenInput.value);
+
+                var headers = { 'X-Requested-With': 'XMLHttpRequest' };
+                if (tokenInput) headers['RequestVerificationToken'] = tokenInput.value;
+
+                fetch('/Employees/Terminate?id=' + encodeURIComponent(id), {
+                    method: 'POST',
+                    body: formData,
+                    headers: headers,
+                    credentials: 'same-origin'
+                })
+                    .then(async function (response) {
+                        var payload = { success: false, message: 'Invalid server response.' };
+                        try { payload = await response.json(); } catch { }
+                        if (!response.ok || !payload.success) {
+                            showToast('Deletion failed: ' + (payload.message || 'Unable to delete the employee.'), 'danger');
+                            return;
+                        }
+
+                        showToast('Employee and associated data permanently deleted successfully.', 'success');
+
+                        var target = document.querySelector('.employee-card button[data-id="' + id + '"]');
+                        var card = target ? target.closest('.employee-card') : null;
+                        if (card) card.remove();
+
+                        var countEl = document.getElementById('employeeCountBadge');
+                        if (countEl) {
+                            var n = parseInt(countEl.textContent.replace(/\D/g, ''), 10);
+                            if (!isNaN(n)) {
+                                countEl.textContent = Math.max(0, n - 1) + ' Employees';
+                            }
+                        }
+
+                        // Refresh the page so the grid reflows cleanly and
+                        // the employee count stays in sync with the server.
+                        setTimeout(function () { location.reload(); }, 600);
+
+                        var modal = bootstrap.Modal.getInstance(document.getElementById('deleteEmployeeModal'));
+                        if (modal) modal.hide();
+                    })
+                    .catch(function () {
+                        showToast('Deletion failed: unable to reach the server.', 'danger');
+                    })
+                    .finally(function () {
+                        btn.disabled = false;
+                        btn.innerHTML = originalHtml;
+                    });
+            };
+
+            function escapeHtml(text) {
+                return String(text)
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#039;');
+            }
+
+            function showToast(message, type) {
+                var el = document.createElement('div');
+                el.className = 'toast align-items-center text-bg-' + type + ' border-0';
+                el.setAttribute('role', 'alert');
+                el.setAttribute('aria-live', 'assertive');
+                el.setAttribute('aria-atomic', 'true');
+                el.innerHTML = '<div class="d-flex"><div class="toast-body">' + escapeHtml(message) + '</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button></div>';
+                document.body.appendChild(el);
+                var toast = new bootstrap.Toast(el, { autohide: true, delay: 5000 });
+                toast.show();
+                el.addEventListener('hidden.bs.toast', function () { el.remove(); });
+            }
+        })();
+    </script>
+}

@@ -1,0 +1,22 @@
+@model string
+
+@*
+    Shared attendance status indicator.
+    Status is always communicated with a text label, never by colour alone.
+*@
+@if (Model == "Early")
+{
+    <span class="badge bg-info"><i class="bi bi-arrow-up-short"></i>@Model</span>
+}
+else if (Model == "On Time")
+{
+    <span class="badge bg-success"><i class="bi bi-check-circle"></i>@Model</span>
+}
+else if (Model == "Late")
+{
+    <span class="badge bg-warning"><i class="bi bi-clock"></i>@Model</span>
+}
+else
+{
+    <span class="badge bg-secondary">@Model</span>
+}

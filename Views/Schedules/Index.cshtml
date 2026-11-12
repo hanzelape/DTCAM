@@ -1,0 +1,116 @@
+@model IEnumerable<FaceAttendanceSystem.Models.Schedule>
+@{
+    ViewData["Title"] = "Schedules";
+}
+
+<div class="page-header">
+    <div>
+        <h1 class="page-title">Schedules</h1>
+        <p class="page-subtitle">Activities that define when and where employees may check in.</p>
+    </div>
+    <div class="d-flex gap-2 flex-wrap">
+        <a asp-action="Create" class="btn btn-primary"><i class="bi bi-calendar-plus"></i> Add Schedule</a>
+    </div>
+</div>
+
+@if (TempData["Success"] != null)
+{
+    <div class="alert alert-success">@TempData["Success"]</div>
+}
+
+<form asp-action="Index" method="get" class="mb-3">
+    <div class="row g-3 align-items-end">
+        <div class="col-md-6">
+            <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                <input type="text" name="search" class="form-control" placeholder="Search by title, location, or description..." value="@ViewBag.Search" />
+            </div>
+        </div>
+        <div class="col-md-auto">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+            @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+            {
+                <a asp-action="Index" class="btn btn-outline-primary"><i class="bi bi-x-circle"></i> Clear</a>
+            }
+        </div>
+    </div>
+</form>
+
+@functions {
+    string FormatRepeat(FaceAttendanceSystem.Models.Schedule s)
+    {
+        if (s.RepeatType == FaceAttendanceSystem.Models.ScheduleRepeatType.None)
+            return "None";
+
+        var days = s.RepeatDays
+            .Split(',', StringSplitOptions.RemoveEmptyEntries)
+            .Select(d => int.TryParse(d, out var n) ? n : -1)
+            .Where(n => n >= 0 && n <= 6)
+            .Select(n => new[] { "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat" }[n]);
+
+        var freq = s.RepeatType == FaceAttendanceSystem.Models.ScheduleRepeatType.Weekly ? "Weekly" : "Bi-Weekly";
+        return $"{freq} · {string.Join(", ", days)}";
+    }
+
+    string FormatMode(FaceAttendanceSystem.Models.Schedule s)
+    {
+        if (s.EmployeeAssignments == null || !s.EmployeeAssignments.Any())
+            return "Unassigned";
+
+        return s.EmployeeAssignments.Count > 0 ? "Assigned" : "Unassigned";
+    }
+}
+
+<div class="premium-table-wrapper">
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th scope="col">Activity</th>
+                <th scope="col">Date</th>
+                <th scope="col">Start Time</th>
+                <th scope="col">End Time</th>
+                <th scope="col">Location</th>
+                <th scope="col">Repeat</th>
+                <th scope="col">Assignment</th>
+                <th scope="col">Assigned</th>
+                <th scope="col">Grace</th>
+                <th scope="col"><span class="sr-only">Actions</span></th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="10" class="text-center text-muted py-4">No schedules found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var schedule in Model)
+                {
+                    <tr>
+                        <td>
+                            <span class="fw-semibold">@schedule.Title</span>
+                            @if (!string.IsNullOrEmpty(schedule.Description))
+                            {
+                                <br /><small class="text-muted">@schedule.Description</small>
+                            }
+                        </td>
+                        <td>@schedule.Date.ToString("MMM dd, yyyy")</td>
+                        <td>@DateTime.Today.Add(schedule.StartTime).ToString("hh:mm tt")</td>
+                        <td>@DateTime.Today.Add(schedule.EndTime).ToString("hh:mm tt")</td>
+                        <td>@schedule.Location</td>
+                        <td>@FormatRepeat(schedule)</td>
+                        <td>@FormatMode(schedule)</td>
+                        <td>@schedule.EmployeeAssignments.Count</td>
+                        <td>@schedule.LateGracePeriodMinutes min</td>
+                        <td class="text-nowrap">
+                            <a asp-action="Edit" asp-route-id="@schedule.Id" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i> Edit</a>
+                            <a asp-action="Delete" asp-route-id="@schedule.Id" class="btn btn-sm btn-outline-secondary"><i class="bi bi-trash"></i> Delete</a>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>

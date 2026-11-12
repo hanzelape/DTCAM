@@ -1,0 +1,91 @@
+@model FaceAttendanceSystem.ViewModels.LoginViewModel
+@{
+    ViewData["Title"] = "Sign In";
+    Layout = "_LoginLayout";
+}
+
+<div class="login-card">
+    <div class="glass-grain-layer" aria-hidden="true"></div>
+    <div class="login-brand">
+        <svg class="clock-tower" viewBox="0 0 60 84" fill="none" aria-hidden="true" focusable="false">
+            <path d="M30 2 34 8H26L30 2Z" fill="currentColor" />
+            <line x1="30" y1="8" x2="30" y2="14" stroke="currentColor" stroke-width="2" />
+            <path d="M18 20a12 12 0 1 1 24 0" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" />
+            <circle cx="30" cy="20" r="7" stroke="currentColor" stroke-width="2.2" />
+            <path d="M30 16v4.4l3 1.8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+            <path d="M22 32h16v6H22z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" />
+            <path d="M14 40h32v40H14z" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" />
+            <path d="M10 82V74c0-4 4-6 8-6h24c4 0 8 2 8 6v8" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round" />
+            <path d="M22 46v8M30 46v8M38 46v8M22 60v14M30 60v14M38 60v14" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity="0.75" />
+        </svg>
+
+        <img src="~/images/manilalogo-256.png" alt="DTCAM" class="login-logo" />
+        <h3 class="login-title mb-1">DTCAM</h3>
+        <p class="login-subtitle mb-1">Facial Recognition System</p>
+        <p class="login-org mb-0">Department of Tourism,<br />Culture and Arts of Manila</p>
+        <span class="portal-chip"><i class="bi bi-shield-lock"></i> Administrator Portal</span>
+    </div>
+
+    <hr />
+
+    @if (TempData["Success"] != null)
+    {
+        <div class="alert alert-success">@TempData["Success"]</div>
+    }
+
+    <form asp-action="Login" method="post">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+        <div class="mb-3">
+            <label asp-for="Username" class="form-label"></label>
+            <div class="input-group">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-person"></i></span>
+                <input asp-for="Username" class="form-control" autocomplete="username" autofocus />
+            </div>
+            <span asp-validation-for="Username" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="Password" class="form-label"></label>
+            <div class="input-group">
+                <span class="input-group-text" aria-hidden="true"><i class="bi bi-key"></i></span>
+                <input asp-for="Password" class="form-control" autocomplete="current-password" />
+            </div>
+            <span asp-validation-for="Password" class="text-danger"></span>
+        </div>
+
+        <div class="form-check mb-3">
+            <input asp-for="RememberMe" class="form-check-input" />
+            <label asp-for="RememberMe" class="form-check-label"></label>
+        </div>
+
+        <div class="mb-3">
+            <div class="form-check">
+                <input asp-for="TermsAccepted" class="form-check-input" required />
+                <label asp-for="TermsAccepted" class="form-check-label">I agree to the <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">Terms and Conditions</a></label>
+                <span asp-validation-for="TermsAccepted" class="text-danger"></span>
+            </div>
+        </div>
+
+        <input type="hidden" name="returnUrl" value="@ViewData["ReturnUrl"]" />
+
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary btn-lg btn-shimmer">
+                <i class="bi bi-box-arrow-in-right"></i> Sign In
+            </button>
+        </div>
+    </form>
+
+    <p class="login-footnote">
+        <i class="bi bi-shield-check"></i>
+        Biometric data is processed solely for attendance verification and is handled under the
+        <a href="#" data-bs-toggle="modal" data-bs-target="#termsModal">System Privacy Policy</a>.
+    </p>
+</div>
+
+<partial name="_TermsModal" />
+
+@section Scripts {
+    @{ await Html.RenderPartialAsync("_ValidationScriptsPartial"); }
+}

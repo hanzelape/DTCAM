@@ -1,0 +1,108 @@
+"""FastAPI backend for facial recognition.
+
+Endpoints:
+    GET  /health            -> service availability check
+    POST /encode            -> create a face encoding from an image
+    POST /recognize         -> match a captured face against known faces
+"""
+
+import json
+import logging
+import time
+from contextlib import asynccontextmanager
+
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
+from starlette.concurrency import run_in_threadpool
+
+from services.face_analysis import get_face_analysis
+from services.face_encoder import FaceEncodeError, encode_from_bytes, decode_encoding
+from services.face_matcher import match_face, match_encoding
+
+logger = logging.getLogger("uvicorn.error")
+
+
+@asynccontextmanager
+async def lifespan(_: FastAPI):
+    started = time.perf_counter()
+    await run_in_threadpool(get_face_analysis)
+    logger.info("face_model_loaded elapsed_ms=%.1f", (time.perf_counter() - started) * 1000)
+    yield
+
+
+app = FastAPI(title="Face Recognition API", version="1.0.0", lifespan=lifespan)
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.post("/encode")
+async def create_encoding(image: UploadFile = File(...), known_faces: str | None = Form(None)):
+    """Create a face encoding from an uploaded image.
+
+    Returns:
+        {"encoding": "<json array string>"}
+    """
+    started = time.perf_counter()
+    try:
+        image_bytes = await image.read()
+
+        known = None
+        if known_faces is not None:
+            try:
+                known = json.loads(known_faces)
+            except json.JSONDecodeError:
+                raise HTTPException(status_code=400, detail="Invalid known_faces JSON.")
+            if not isinstance(known, list):
+                raise HTTPException(status_code=400, detail="known_faces must be a JSON array.")
+
+        try:
+            encoding = await run_in_threadpool(encode_from_bytes, image_bytes)
+        except FaceEncodeError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
+        result = {"encoding": encoding}
+        if known is not None:
+            result.update(match_encoding(decode_encoding(encoding), known).to_dict())
+        return result
+    finally:
+        logger.info(
+            "face_api_operation=encode elapsed_ms=%.1f image_bytes=%d",
+            (time.perf_counter() - started) * 1000,
+            len(image_bytes) if "image_bytes" in locals() else 0,
+        )
+
+
+@app.post("/recognize")
+async def recognize(
+    image: UploadFile = File(...),
+    known_faces: str = Form(...),
+):
+    """Match a captured face against known faces.
+
+    known_faces is a JSON string: [{ "employee_id": int, "employee_name": str, "encoding": "<json>" }]
+    """
+    started = time.perf_counter()
+    try:
+        image_bytes = await image.read()
+
+        try:
+            known = json.loads(known_faces)
+        except json.JSONDecodeError:
+            raise HTTPException(status_code=400, detail="Invalid known_faces JSON.")
+
+        result = await run_in_threadpool(match_face, image_bytes, known)
+        return result.to_dict()
+    finally:
+        logger.info(
+            "face_api_operation=recognize elapsed_ms=%.1f image_bytes=%d",
+            (time.perf_counter() - started) * 1000,
+            len(image_bytes) if "image_bytes" in locals() else 0,
+        )
+
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="0.0.0.0", port=5000)

@@ -1,0 +1,108 @@
+@model IEnumerable<FaceAttendanceSystem.Models.Department>
+
+@{
+    ViewData["Title"] = "Departments";
+}
+
+<div class="premium-form-card mb-4">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-building"></i>
+        </div>
+        <div>
+            <h2>Departments</h2>
+            <p>Manage organizational departments.</p>
+        </div>
+    </div>
+
+    <div class="premium-form-body">
+        <form asp-action="Index" method="get" class="mb-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text"><i class="bi bi-search"></i></span>
+                        <input type="text" name="search" class="form-control" placeholder="Search departments..." value="@ViewBag.Search" />
+                    </div>
+                </div>
+                <div class="col-md-auto">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-search"></i> Search</button>
+                    @if (!string.IsNullOrEmpty(ViewBag.Search as string))
+                    {
+                        <a asp-action="Index" class="btn btn-outline-primary"><i class="bi bi-x-circle"></i> Clear</a>
+                    }
+                </div>
+            </div>
+        </form>
+
+        <form asp-action="Create" method="post" class="row g-2 align-items-center">
+            <div class="col-auto flex-grow-1">
+                <input type="text" name="name" class="form-control" placeholder="Department name" required />
+            </div>
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary"><i class="bi bi-plus-lg me-2"></i>Add Department</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="premium-table-wrapper">
+    <div class="premium-table-header">
+        <h2>All Departments</h2>
+    </div>
+    <table class="table table-striped mb-0">
+        <thead>
+            <tr>
+                <th scope="col">#</th>
+                <th scope="col">Name</th>
+                <th scope="col">Created At</th>
+                <th scope="col" class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Any())
+            {
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">No departments found.</td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var dept in Model)
+                {
+                    <tr>
+                        <td>@dept.Id</td>
+                        <td class="fw-semibold">@dept.Name</td>
+                        <td>@dept.CreatedAt.ToString("MMM dd, yyyy")</td>
+                        <td class="text-end">
+                            <div class="premium-actions justify-content-end">
+                                <a asp-action="Details" asp-route-id="@dept.Id" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-eye me-1"></i>View
+                                </a>
+                                <form asp-action="Delete" asp-route-id="@dept.Id" method="post"
+                                      class="js-delete-form d-inline">
+                                    <input type="hidden" name="deptName" value="@dept.Name" />
+                                    <button type="submit" class="btn btn-sm btn-danger">
+                                        <i class="bi bi-trash me-1"></i>Delete
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+@section Scripts {
+    <script>
+        document.querySelectorAll('.js-delete-form').forEach(form => {
+            form.addEventListener('submit', function (e) {
+                const name = this.querySelector('input[name="deptName"]').value;
+                if (!confirm('Delete department "' + name + '"?')) {
+                    e.preventDefault();
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,248 @@
+@model FaceAttendanceSystem.ViewModels.ScheduleCreateViewModel
+@{
+    ViewData["Title"] = "Schedule Assignments";
+    var assignedIds = ViewBag.AssignedEmployeeIds as HashSet<int> ?? new HashSet<int>();
+    var scheduleItems = ViewBag.Schedules as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+    var departmentItems = ViewBag.Departments as IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem> ?? Enumerable.Empty<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>();
+}
+
+<div class="premium-form-card mb-4">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-diagram-3"></i>
+        </div>
+        <div>
+            <h2>Schedule Assignments</h2>
+            <p>Select a schedule to view and manage employee assignments.</p>
+        </div>
+    </div>
+
+    <div class="premium-form-body">
+        <form asp-action="Assignments" method="get" class="mb-3">
+            <div class="row g-3 align-items-end">
+                <div class="col-md-6">
+                    <label class="form-label" for="scheduleSelect">Schedule</label>
+                    <input type="text" id="scheduleSearch" class="form-control mb-2" placeholder="Type to search schedules..." autocomplete="off" aria-label="Filter schedules" />
+                    <select name="scheduleId" class="form-select" id="scheduleSelect" onchange="this.form.submit()">
+                        <option value="">-- Select a schedule --</option>
+                        @foreach (var item in scheduleItems)
+                        {
+                            var itemTextLower = item.Text != null ? item.Text.ToLower() : string.Empty;
+                            var isSelected = item.Value == Model.ScheduleId.ToString();
+                            if (isSelected)
+                            {
+                                <option value="@item.Value" data-search="@itemTextLower" selected>@item.Text</option>
+                            }
+                            else
+                            {
+                                <option value="@item.Value" data-search="@itemTextLower">@item.Text</option>
+                            }
+                        }
+                    </select>
+                </div>
+            </div>
+        </form>
+
+        @if (Model.ScheduleId > 0)
+        {
+            <hr />
+            <h5 class="fw-semibold mb-3">Current Assignments</h5>
+            @if (ViewBag.CurrentAssignments != null && ((IEnumerable<dynamic>)ViewBag.CurrentAssignments).Any())
+            {
+                <div class="premium-table-wrapper mb-4">
+                    <table class="table table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>Employee ID</th>
+                                <th>Name</th>
+                                <th class="text-end">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in (IEnumerable<dynamic>)ViewBag.CurrentAssignments)
+                            {
+                                <tr>
+                                    <td>@item.EmployeeId</td>
+                                    <td>@item.EmployeeName</td>
+                                    <td class="text-end">
+                                        <form asp-action="RemoveAssignment" asp-route-scheduleId="@Model.ScheduleId" asp-route-employeeId="@item.EmployeeId" method="post" class="d-inline" onsubmit="return confirm('Remove this assignment?');">
+                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                <i class="bi bi-trash me-1"></i>Remove
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p class="text-muted mb-4">No employees assigned to this schedule yet.</p>
+            }
+
+            <hr />
+            <h5 class="fw-semibold mb-3">Add Employees</h5>
+
+            <form asp-action="Assignments" method="post">
+                <input type="hidden" asp-for="ScheduleId" />
+
+                <div class="row g-3 align-items-end mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label d-block">
+                            <input asp-for="AssignAll" class="form-check-input me-2" />
+                            All Employees
+                        </label>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <input type="text" id="employeeSearch" class="form-control" placeholder="Search employees" aria-label="Search employees" />
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="d-flex gap-2 align-items-end mb-2">
+                                <div class="flex-grow-1">
+                                    <input type="text" id="departmentSearch" class="form-control" placeholder="Search departments..." autocomplete="off" />
+                                </div>
+                                <a asp-controller="Departments" asp-action="Index" class="btn btn-primary" target="_blank">
+                                    <i class="bi bi-plus-lg me-1"></i>Add Department
+                                </a>
+                            </div>
+                            <select id="departmentFilter" class="form-select" aria-label="Filter employees">
+                                <option value="">All Employees</option>
+                                @foreach (var dept in departmentItems)
+                                {
+                                    var deptTextLower = dept.Text != null ? dept.Text.ToLower() : string.Empty;
+                                    <option value="@dept.Text" data-search="@deptTextLower">@dept.Text</option>
+                                }
+                            </select>
+                        </div>
+
+                        <div id="employeeAssignmentSection">
+                            <div class="list-group">
+                                @if (ViewBag.DepartmentEmployees != null)
+                                {
+                                    foreach (var employee in (IEnumerable<FaceAttendanceSystem.Models.Employee>)ViewBag.DepartmentEmployees)
+                                    {
+                                        var isAssigned = assignedIds.Contains(employee.Id);
+                                        <label class="list-group-item employee-row @(isAssigned ? "disabled" : "")" data-department="@employee.Department" data-employee-name="@employee.FullName" data-employee-id="@employee.EmployeeId" style="@(isAssigned ? "opacity:0.5; cursor:not-allowed;" : "")">
+                                            <input type="checkbox" class="form-check-input me-2" name="SelectedEmployeeIds" value="@employee.Id" @(isAssigned ? "disabled" : "") />
+                                            <span>@employee.FullName (@employee.EmployeeId)</span>
+                                            @if (isAssigned)
+                                            {
+                                                <span class="badge bg-secondary ms-2">Assigned</span>
+                                            }
+                                        </label>
+                                    }
+                                }
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-flex gap-2 mt-3">
+                    <button type="submit" class="btn btn-primary">Save Assignment</button>
+                </div>
+            </form>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const scheduleSelect = document.getElementById('scheduleSelect');
+        const scheduleSearch = document.getElementById('scheduleSearch');
+        const assignAll = document.getElementById('AssignAll');
+        const employeeAssignmentSection = document.getElementById('employeeAssignmentSection');
+        const departmentFilter = document.getElementById('departmentFilter');
+        const departmentSearch = document.getElementById('departmentSearch');
+        const employeeSearch = document.getElementById('employeeSearch');
+
+        function updateAssignmentMode() {
+            const allChecked = assignAll && assignAll.checked;
+            employeeAssignmentSection.classList.toggle('d-none', allChecked);
+        }
+
+        function initSearchableSelect(selectElement, searchInput) {
+            if (!selectElement || !searchInput) return;
+
+            const originalOptions = [];
+            selectElement.querySelectorAll('option').forEach(function(opt) {
+                originalOptions.push({
+                    value: opt.value,
+                    text: opt.text,
+                    search: opt.getAttribute('data-search') || opt.text.toLowerCase(),
+                    selected: opt.selected
+                });
+            });
+
+            function filter() {
+                const query = searchInput.value.trim().toLowerCase();
+                const filtered = originalOptions.filter(function(opt) {
+                    return !query || opt.search.includes(query);
+                });
+
+                selectElement.innerHTML = '';
+
+                filtered.forEach(function(opt) {
+                    const option = document.createElement('option');
+                    option.value = opt.value;
+                    option.textContent = opt.text;
+                    option.setAttribute('data-search', opt.search);
+                    if (opt.selected) option.selected = true;
+                    selectElement.appendChild(option);
+                });
+
+                if (filtered.length === 0) {
+                    const option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '-- No matches --';
+                    selectElement.appendChild(option);
+                }
+            }
+
+            searchInput.addEventListener('input', filter);
+        }
+
+        function updateEmployeeFilters() {
+            const filterValue = departmentFilter ? departmentFilter.value : '';
+            const searchValue = employeeSearch ? employeeSearch.value.trim().toLowerCase() : '';
+            const rows = document.querySelectorAll('.employee-row');
+
+            rows.forEach(function (row) {
+                if (row.classList.contains('disabled')) return;
+
+                const dept = row.getAttribute('data-department') || '';
+                const name = (row.getAttribute('data-employee-name') || '').toLowerCase();
+                const id = row.getAttribute('data-employee-id') || '';
+
+                const deptMatches = !filterValue || dept === filterValue;
+                const textMatches = !searchValue || name.includes(searchValue) || id.includes(searchValue);
+
+                row.classList.toggle('d-none', !(deptMatches && textMatches));
+            });
+        }
+
+        initSearchableSelect(scheduleSelect, scheduleSearch);
+        initSearchableSelect(departmentFilter, departmentSearch);
+
+        if (assignAll) {
+            assignAll.addEventListener('change', updateAssignmentMode);
+        }
+
+        if (departmentFilter) {
+            departmentFilter.addEventListener('change', updateEmployeeFilters);
+        }
+
+        if (employeeSearch) {
+            employeeSearch.addEventListener('input', updateEmployeeFilters);
+        }
+
+        updateAssignmentMode();
+        updateEmployeeFilters();
+    </script>
+}

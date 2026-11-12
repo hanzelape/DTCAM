@@ -1,0 +1,242 @@
+@{
+    ViewData["Title"] = "Facial Recognition";
+    Layout = "_EmployeeLayout";
+}
+
+<div class="checkin-page">
+    <div class="checkin-card mx-auto">
+        <div class="checkin-card-header">
+            <div class="avatar-icon">
+                <i class="bi bi-person-check"></i>
+            </div>
+            <div>
+                <h1 class="page-title" style="font-size:22px;">Facial Recognition</h1>
+                <p>Look at the camera to check in automatically. Only your face will be recognized.</p>
+            </div>
+        </div>
+
+        <div class="checkin-viewport" id="checkinViewport">
+            <video id="videoCamera" width="640" height="480" autoplay playsinline hidden></video>
+            <canvas id="canvasPreview" style="display:none;"></canvas>
+            <canvas id="faceCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10;"></canvas>
+            <div class="checkin-viewport-overlay" id="viewfinderOverlay">
+                <i class="bi bi-camera"></i>
+                <span>Camera is off</span>
+            </div>
+        </div>
+
+        <div class="checkin-controls">
+            <button type="button" id="btnStartCamera" class="btn btn-primary" disabled>
+                <i class="bi bi-play-fill me-2"></i>Start Camera
+            </button>
+            <button type="button" id="btnStopCamera" class="btn btn-outline-secondary">
+                <i class="bi bi-stop-fill me-2"></i>Stop Camera
+            </button>
+        </div>
+
+        <p class="form-text text-center mt-3 mb-0">
+            <i class="bi bi-shield-check"></i>
+            Your face is used only to verify this check-in. No image is shown to other employees.
+        </p>
+
+        <div id="messageArea" class="checkin-message alert" hidden></div>
+
+        <div id="resultContainer" class="checkin-results"></div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
+    <script src="~/js/camera.js" asp-append-version="true"></script>
+    <script>
+        const btnStart = document.getElementById('btnStartCamera');
+        const btnStop = document.getElementById('btnStopCamera');
+        const video = document.getElementById('videoCamera');
+        const messageArea = document.getElementById('messageArea');
+        const resultContainer = document.getElementById('resultContainer');
+        const overlay = document.getElementById('viewfinderOverlay');
+
+        function setOverlay(icon, text, visible) {
+            if (!overlay) return;
+            overlay.innerHTML = '<i class="bi bi-' + icon + '"></i><span>' + text + '</span>';
+            overlay.style.display = visible ? 'flex' : 'none';
+        }
+
+        function showMessage(text, isError) {
+            if (!messageArea) return;
+            messageArea.textContent = text;
+            messageArea.className = isError
+                ? 'alert alert-danger checkin-message'
+                : 'alert alert-success checkin-message';
+            messageArea.hidden = false;
+        }
+
+        function addResultCard(data) {
+            if (!resultContainer) return;
+
+            const card = document.createElement('div');
+            card.className = 'checkin-result-card';
+            card.innerHTML = `
+                <div class="checkin-result-header">
+                    <div class="checkin-result-icon">
+                        <i class="bi bi-check2"></i>
+                    </div>
+                    <h6>Check-in Successful</h6>
+                </div>
+                <div class="checkin-result-meta">
+                    <div><strong>Name:</strong> <span data-name>${data.employeeName || ''}</span></div>
+                    <div><strong>Schedule:</strong> <span data-schedule>${data.schedule || ''}</span></div>
+                    <div><strong>Status:</strong> <span data-status>${data.status || ''}</span></div>
+                    <div><strong>Detection reliability:</strong> <span data-confidence>${data.confidence ? (data.confidence * 100).toFixed(1) + '%' : ''}</span></div>
+                </div>
+                <div class="checkin-result-time"><small>${new Date().toLocaleTimeString()}</small></div>
+            `;
+            resultContainer.appendChild(card);
+
+            resultContainer.scrollTop = resultContainer.scrollHeight;
+        }
+
+        let isProcessing = false;
+        let scanInterval = null;
+        let cooldownUntil = 0;
+        let cachedPosition = null;
+
+        function getCachedPosition() {
+            return new Promise(function (resolve) {
+                if (cachedPosition) {
+                    resolve(cachedPosition);
+                    return;
+                }
+
+                if (!navigator.geolocation) {
+                    resolve(null);
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(
+                    function (pos) {
+                        cachedPosition = {
+                            latitude: pos.coords.latitude,
+                            longitude: pos.coords.longitude
+                        };
+                        resolve(cachedPosition);
+                    },
+                    function () {
+                        resolve(null);
+                    },
+                    { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+                );
+            });
+        }
+
+        async function submitCheckIn(imageDataUrl) {
+            if (isProcessing) return;
+            if (Date.now() < cooldownUntil) return;
+
+            isProcessing = true;
+
+            try {
+                const position = await getCachedPosition();
+                const payload = {
+                    image: imageDataUrl
+                };
+
+                if (position) {
+                    payload.latitude = position.latitude;
+                    payload.longitude = position.longitude;
+                }
+
+                const response = await fetch('/Employee/Recognize', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]')?.value || ''
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    showMessage(data.message, false);
+                    addResultCard(data);
+                    cooldownUntil = Date.now() + 1000;
+                } else {
+                    showMessage(data.message || 'Face not recognized. Continuing to scan...', true);
+                }
+            } catch (err) {
+                console.error(err);
+                showMessage('Could not reach the server. Please try again.', true);
+            } finally {
+                isProcessing = false;
+            }
+        }
+
+        function startScanning() {
+            stopScanning();
+            cachedPosition = null;
+            showMessage('Starting face detection...', false);
+            scanInterval = setInterval(() => {
+                const dataUrl = window.Camera ? window.Camera.capture() : null;
+                if (!dataUrl) {
+                    showMessage('Could not capture image. Make sure the camera is running.', true);
+                    return;
+                }
+                submitCheckIn(dataUrl);
+            }, 2000);
+        }
+
+        function stopScanning() {
+            if (scanInterval) {
+                clearInterval(scanInterval);
+                scanInterval = null;
+            }
+        }
+
+        async function autoStartCamera() {
+            // Ask first. Resolves false (and shows the floating prompt) when
+            // permission is missing, instead of firing a dead start attempt.
+            const permitted = window.Permissions
+                ? await Permissions.ensure('camera', 'Facial recognition check-in needs the camera.')
+                : { camera: true };
+
+            if (!permitted || permitted.camera !== true) {
+                setOverlay('camera-video', 'Camera access needed — see the prompt', true);
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+                return;
+            }
+
+            video.hidden = false;
+            const result = await Camera.start('videoCamera', 'canvasPreview');
+
+            // Camera.start returns a result rather than throwing, so gate on it.
+            if (!result || !result.ok) {
+                setOverlay('exclamation-triangle', (result && result.reason) || 'The camera could not be started.', true);
+                video.hidden = true;
+                btnStart.disabled = false;
+                btnStop.disabled = true;
+                return;
+            }
+
+            btnStart.disabled = true;
+            btnStop.disabled = false;
+            setOverlay('people', 'Scanning...', false);
+            startScanning();
+        }
+
+        btnStart.addEventListener('click', autoStartCamera);
+
+        btnStop.addEventListener('click', () => {
+            Camera.stop();
+            stopScanning();
+            btnStart.disabled = false;
+            btnStop.disabled = true;
+            video.hidden = true;
+            setOverlay('camera', 'Camera is off', true);
+        });
+
+        autoStartCamera();
+    </script>
+}

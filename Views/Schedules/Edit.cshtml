@@ -1,0 +1,225 @@
+@model FaceAttendanceSystem.ViewModels.ScheduleCreateViewModel
+@{
+    ViewData["Title"] = "Edit Schedule";
+}
+
+<div class="premium-form-card">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-calendar-check"></i>
+        </div>
+        <div>
+            <h2>Edit Schedule</h2>
+            <p>Update the selected schedule and its employee coverage.</p>
+        </div>
+    </div>
+
+    <form asp-action="Edit" method="post" id="scheduleForm">
+        <div class="premium-form-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger mb-3"></div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label asp-for="Title" class="form-label"></label>
+                        <input asp-for="Title" class="form-control" />
+                        <span asp-validation-for="Title" class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Description" class="form-label"></label>
+                        <textarea asp-for="Description" class="form-control" rows="3"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Location" class="form-label"></label>
+                        <input asp-for="Location" class="form-control" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Date" class="form-label"></label>
+                        <input asp-for="Date" type="date" class="form-control" />
+                        <span asp-validation-for="Date" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="premium-section-card">
+                        <div class="premium-section-header">
+                            <i class="bi bi-clock"></i>
+                            Time
+                        </div>
+                        <div class="premium-section-body">
+                            <div class="row">
+                                <div class="col-sm-6">
+                                    <label asp-for="StartTime" class="form-label"></label>
+                                    <input asp-for="StartTime" type="time" class="form-control" />
+                                    <span asp-validation-for="StartTime" class="text-danger"></span>
+                                </div>
+                                <div class="col-sm-6">
+                                    <label asp-for="EndTime" class="form-label"></label>
+                                    <input asp-for="EndTime" type="time" class="form-control" />
+                                    <span asp-validation-for="EndTime" class="text-danger"></span>
+                                </div>
+                            </div>
+
+                            <div class="mb-3 mt-2">
+                                <label asp-for="LateGracePeriodMinutes" class="form-label"></label>
+                                <input asp-for="LateGracePeriodMinutes" type="number" min="0" class="form-control" />
+                                <span asp-validation-for="LateGracePeriodMinutes" class="text-danger"></span>
+                                <div class="form-text">Check-ins within this many minutes after the start time are still marked "On Time".</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="premium-section-card">
+                        <div class="premium-section-header">
+                            <i class="bi bi-arrow-repeat"></i>
+                            Repeat
+                        </div>
+                        <div class="premium-section-body">
+                            <div class="mb-3">
+                                <label asp-for="RepeatType" class="form-label"></label>
+                                <select asp-for="RepeatType" class="form-select" id="repeatTypeSelect">
+                                    <option value="0">Never</option>
+                                    <option value="1">Weekly</option>
+                                    <option value="2">Bi-Weekly</option>
+                                </select>
+                            </div>
+
+                            <div id="repeatDaysSection" class="d-none">
+                                <label class="form-label">Repeat Days</label>
+                                <div class="list-group repeat-days-list">
+                                    @{
+                                        var days = new (int Value, string Name)[]
+                                        {
+                                            (0, "Sunday"),
+                                            (1, "Monday"),
+                                            (2, "Tuesday"),
+                                            (3, "Wednesday"),
+                                            (4, "Thursday"),
+                                            (5, "Friday"),
+                                            (6, "Saturday")
+                                        };
+                                    }
+                                    @foreach (var d in days)
+                                    {
+                                        <label class="list-group-item d-flex justify-content-between align-items-center">
+                                            <span>@d.Name</span>
+                                            <input type="checkbox" class="form-check-input repeat-day-check" name="SelectedDays" value="@d.Value" checked="@(Model.SelectedDays.Contains(d.Value) ? "checked" : null)" />
+                                        </label>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="premium-section-card">
+                        <div class="premium-section-header">
+                            <i class="bi bi-people"></i>
+                            Employee Assignment
+                        </div>
+                        <div class="premium-section-body">
+                            <div class="mb-3">
+                                <label class="form-label d-block">
+                                    <input asp-for="AssignAll" class="form-check-input me-2" />
+                                    All Employees
+                                </label>
+                            </div>
+
+                            <div class="mb-3">
+                                <input type="text" id="employeeSearch" class="form-control" placeholder="Search employees" aria-label="Search employees" />
+                            </div>
+
+                            <div class="mb-3">
+                                <select id="departmentFilter" class="form-select" aria-label="Filter employees">
+                                    <option value="">All Employees</option>
+                                    @if (ViewBag.Departments != null)
+                                    {
+                                        foreach (var dept in (IEnumerable<SelectListItem>)ViewBag.Departments)
+                                        {
+                                            <option value="@dept.Text">@dept.Text</option>
+                                        }
+                                    }
+                                </select>
+                            </div>
+
+                            <div id="employeeAssignmentSection">
+                                <div class="list-group">
+                                    @if (ViewBag.DepartmentEmployees != null)
+                                    {
+                                        foreach (var employee in (IEnumerable<FaceAttendanceSystem.Models.Employee>)ViewBag.DepartmentEmployees)
+                                        {
+                                            var selected = Model.SelectedEmployeeIds.Contains(employee.Id);
+                                            <label class="list-group-item employee-row" data-department="@employee.Department" data-employee-name="@employee.FullName" data-employee-id="@employee.EmployeeId">
+                                                <input type="checkbox" class="form-check-input me-2" name="SelectedEmployeeIds" value="@employee.Id" checked="@(selected ? "checked" : null)" />
+                                                <span>@employee.FullName (@employee.EmployeeId)</span>
+                                            </label>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="premium-form-footer">
+            <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-x-circle me-1"></i>Cancel</a>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Save Schedule</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.getElementById('repeatTypeSelect').addEventListener('change', function () {
+            var show = this.value !== '0';
+            document.getElementById('repeatDaysSection').classList.toggle('d-none', !show);
+        });
+
+        const assignAll = document.getElementById('AssignAll');
+        const employeeAssignmentSection = document.getElementById('employeeAssignmentSection');
+        const departmentFilter = document.getElementById('departmentFilter');
+        const employeeSearch = document.getElementById('employeeSearch');
+
+        function updateAssignmentMode() {
+            const allChecked = assignAll && assignAll.checked;
+            employeeAssignmentSection.classList.toggle('d-none', allChecked);
+        }
+
+        function updateEmployeeFilters() {
+            const filterValue = departmentFilter ? departmentFilter.value : '';
+            const searchValue = employeeSearch ? employeeSearch.value.trim().toLowerCase() : '';
+            const rows = document.querySelectorAll('.employee-row');
+
+            rows.forEach(function (row) {
+                const dept = row.getAttribute('data-department') || '';
+                const name = (row.getAttribute('data-employee-name') || '').toLowerCase();
+                const id = (row.getAttribute('data-employee-id') || '').toLowerCase();
+
+                const deptMatches = !filterValue || dept === filterValue;
+                const textMatches = !searchValue || name.includes(searchValue) || id.includes(searchValue);
+
+                row.classList.toggle('d-none', !(deptMatches && textMatches));
+            });
+        }
+
+        if (assignAll) {
+            assignAll.addEventListener('change', updateAssignmentMode);
+        }
+
+        if (departmentFilter) {
+            departmentFilter.addEventListener('change', updateEmployeeFilters);
+        }
+
+        if (employeeSearch) {
+            employeeSearch.addEventListener('input', updateEmployeeFilters);
+        }
+
+        updateAssignmentMode();
+        updateEmployeeFilters();
+    </script>
+}

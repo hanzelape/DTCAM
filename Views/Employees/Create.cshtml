@@ -1,0 +1,997 @@
+@model FaceAttendanceSystem.ViewModels.EmployeeRegistrationViewModel
+
+@{
+    ViewData["Title"] = "Register Employee";
+}
+
+<div class="premium-form-card">
+    <div class="premium-form-header">
+        <div class="avatar-icon">
+            <i class="bi bi-person-plus"></i>
+        </div>
+        <div>
+            <h2>Register Employee</h2>
+            <p>Create a new employee account and enroll facial recognition data.</p>
+        </div>
+    </div>
+
+    <form asp-action="Create" method="post" enctype="multipart/form-data" id="employeeForm">
+        <div class="premium-form-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="premium-section-header mb-3">
+                <i class="bi bi-person-lines-fill"></i> Employee Details
+            </div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div>
+                        <label asp-for="EmployeeId" class="form-label"></label>
+                        <input asp-for="EmployeeId" class="form-control" />
+                        <span asp-validation-for="EmployeeId" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div>
+                        <label asp-for="FullName" class="form-label"></label>
+                        <input asp-for="FullName" class="form-control" />
+                        <span asp-validation-for="FullName" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div>
+                        <label class="form-label">Department</label>
+                        <input class="form-control" value="Department of Tourism, Culture and Arts of Manila (DTCAM)" readonly />
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div>
+                        <label asp-for="Email" class="form-label"></label>
+                        <input asp-for="Email" class="form-control" type="email" />
+                        <span asp-validation-for="Email" class="text-danger"></span>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div>
+                        <label asp-for="Password" class="form-label"></label>
+                        <input asp-for="Password" class="form-control" type="password" />
+                        <span asp-validation-for="Password" class="text-danger"></span>
+                    </div>
+                </div>
+            </div>
+
+            <hr />
+            <div class="premium-section-header mt-0">
+                <i class="bi bi-person-bounding-box"></i> Face Registration
+            </div>
+            <div class="premium-section-body">
+                <div class="d-flex align-items-center gap-3 mb-3 flex-wrap">
+                    <p class="text-muted mb-0 flex-grow-1">Capture the employee's face from multiple angles for faster, more reliable recognition.</p>
+                    <!-- id added so it can be hidden once angles exist -->
+                    <button type="button" class="btn btn-primary" id="btnCaptureFace" data-bs-toggle="modal" data-bs-target="#registerFaceModal">
+                        <i class="bi bi-camera me-2"></i>Capture Face
+                    </button>
+                </div>
+
+                <!-- Review of everything that will actually be submitted.
+                     Populated from the same array the hidden field posts. -->
+                <div class="capture-review" id="captureReview">
+                    <div class="capture-review-head">
+                        <span class="capture-count" id="captureCount">0 of 5 captured</span>
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="btnRetake">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Retake Photos
+                        </button>
+                    </div>
+                    <div class="capture-strip" id="captureStrip"></div>
+                    <p class="form-text mb-0 mt-2" id="captureHint">
+                        Capture all five positions to improve recognition accuracy.
+                    </p>
+                </div>
+            </div>
+
+            <input type="hidden" id="capturedPhotos" name="CapturedPhotos" value="@(ViewBag.CapturedPhotos ?? "[]")" />
+            <input type="hidden" asp-for="CapturedPhoto" id="capturedPhotoInput" value="" />
+            <input type="hidden" id="currentStep" value="0" />
+        </div>
+
+        <div class="premium-form-footer">
+            <a asp-action="Index" class="btn btn-outline-secondary"><i class="bi bi-x-circle me-1"></i>Cancel</a>
+            <button type="submit" class="btn btn-primary" id="btnRegister" disabled>
+                <i class="bi bi-person-plus me-1"></i>Register
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Registration overlay: the server encodes every angle on the CPU, which
+     is genuinely slow. The staged list keeps it clear the request is alive. -->
+<div class="register-overlay" id="registerOverlay" role="alertdialog" aria-live="polite" aria-labelledby="registerOverlayTitle">
+    <div class="register-overlay-card">
+        <div class="register-spinner" aria-hidden="true"></div>
+        <h3 class="h5 mb-1" id="registerOverlayTitle">Registering employee</h3>
+        <p class="text-muted small mb-3">Please keep this page open while the face data is processed.</p>
+
+        <ul class="register-steps" id="registerSteps">
+            <li class="register-step" data-stage="0">
+                <span class="register-step-dot"><i class="bi bi-check-lg"></i></span>
+                <span>Securing your submission</span>
+            </li>
+            <li class="register-step" data-stage="1">
+                <span class="register-step-dot"><i class="bi bi-check-lg"></i></span>
+                <span>Saving the captured photo</span>
+            </li>
+            <li class="register-step" data-stage="2">
+                <span class="register-step-dot"><i class="bi bi-check-lg"></i></span>
+                <span>Generating face encodings</span>
+            </li>
+            <li class="register-step" data-stage="3">
+                <span class="register-step-dot"><i class="bi bi-check-lg"></i></span>
+                <span>Checking for duplicate faces</span>
+            </li>
+            <li class="register-step" data-stage="4">
+                <span class="register-step-dot"><i class="bi bi-check-lg"></i></span>
+                <span>Writing the employee record</span>
+            </li>
+        </ul>
+
+        <div class="register-bar" aria-hidden="true"></div>
+    </div>
+</div>
+
+<!-- Face Capture Modal: automatic 3-second timed capture with retake -->
+<div class="modal fade" id="registerFaceModal" tabindex="-1" aria-labelledby="registerFaceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content face-modal">
+            <div class="modal-header">
+                <div class="d-flex align-items-center gap-3">
+                    <div class="avatar-icon">
+                        <i class="bi bi-person-bounding-box"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0" id="registerFaceModalLabel">Face Registration</h5>
+                        <small class="text-muted d-none" id="modalEmployeeInfo"></small>
+                    </div>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+                <div class="modal-body pt-0">
+
+                    <!-- Employee context carried from the form (preserved across retakes). -->
+                    <div class="face-employee-context mb-3 text-center d-none" id="faceEmployeeContext">
+                        <span class="face-employee-id" id="faceEmployeeId"></span>
+                        <span class="face-employee-name" id="faceEmployeeName"></span>
+                    </div>
+
+                    <!-- Current facial positioning instruction (LOOK STRAIGHT / TURN LEFT / ...). -->
+                    <div class="face-instruction-panel text-center mb-3">
+                        <span class="face-position-badge" id="facePositionBadge">Position 1 of 5</span>
+                        <h4 class="face-position-title mb-2" id="facePositionTitle">LOOK STRAIGHT</h4>
+                        <p class="face-position-desc text-muted mb-0" id="facePositionDesc">Face the camera directly.</p>
+                    </div>
+
+                    <div class="face-viewfinder" id="faceViewfinder">
+                        <video id="videoCamera" autoplay playsinline hidden></video>
+                        <canvas id="canvasPreview" style="display:none;"></canvas>
+                        <canvas id="faceCanvas" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:10;"></canvas>
+                        <img id="imgPreview" alt="Captured photo" hidden />
+
+                        <!-- Subtle face-positioning guide drawn over the live frame. -->
+                        <div class="face-position-guide" id="facePositionGuide" aria-hidden="true"></div>
+
+                        <!-- Large 3 -> 2 -> 1 countdown overlay shown only during capture. -->
+                        <div class="face-countdown" id="faceCountdown" hidden>
+                            <div class="face-countdown-ring" id="faceCountdownRing"></div>
+                            <div class="face-countdown-number" id="faceCountdownNumber">3</div>
+                        </div>
+
+                        <div class="face-viewfinder-overlay" id="viewfinderOverlay">
+                            <i class="bi bi-camera"></i>
+                            <span>Camera is off</span>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small mt-3 mb-0" id="cameraHint">
+                        <i class="bi bi-info-circle"></i>
+                        <span id="cameraHintText">Initializing camera...</span>
+                    </p>
+
+                    <!-- Final photo review screen (shown after all five captures). -->
+                    <div class="face-review-panel" id="faceReviewPanel" hidden>
+                        <div class="face-review-header text-center mb-4">
+                            <h4 class="face-review-title">Review Your Face Registration Photos</h4>
+                            <p class="face-review-subtitle text-muted">Confirm all five angles before completing registration.</p>
+                        </div>
+
+                        <div class="face-review-grid" id="faceReviewGrid">
+                            <!-- Five photo slots generated by JS. -->
+                        </div>
+
+                        <div class="face-review-selection mt-3 text-center d-none" id="faceReviewSelection">
+                            <span class="face-review-selected-label" id="faceReviewSelectedLabel">Selected: LOOK STRAIGHT</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <div class="d-flex align-items-center justify-content-between w-100 flex-wrap gap-2">
+                        <div id="faceStatus" class="face-status text-muted small">
+                            <i class="bi bi-circle-fill me-1"></i><span id="faceStatusText">Idle</span>
+                        </div>
+                        <div class="d-flex gap-2">
+                            <button type="button" id="btnExitFace" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-lg me-2"></i>Cancel
+                            </button>
+                            <button type="button" id="btnRetakePosition" class="btn btn-outline-warning face-btn-retake" hidden>
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Retake Position
+                            </button>
+                            <button type="button" id="btnRetakeSelected" class="btn btn-outline-warning face-btn-retake-selected" hidden>
+                                <i class="bi bi-arrow-counterclockwise me-2"></i>Retake Selected
+                            </button>
+                            <button type="button" id="btnRetakeAll" class="btn btn-outline-danger face-btn-retake-all" hidden>
+                                <i class="bi bi-arrow-repeat me-2"></i>Retake All
+                            </button>
+                            <button type="button" id="btnCancelRegistration" class="btn btn-outline-secondary face-btn-cancel" hidden>
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </button>
+                            <button type="button" id="btnCompleteRegistration" class="btn btn-primary face-btn-complete" hidden>
+                                <i class="bi bi-check-lg me-2"></i>Complete Registration
+                            </button>
+                        </div>
+                    </div>
+                </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/js/camera.js" asp-append-version="true"></script>
+    <script>
+        (function () {
+            "use strict";
+
+            /* ----------------------------------------------------------------
+               Five facial positions (preserved in sequence).
+               Capture 1 (LOOK STRAIGHT) requires face detection + 3s timer.
+               Captures 2–5 use only a 3s timer (no face detection).
+               ---------------------------------------------------------------- */
+            const POSITIONS = [
+                { key: 'straight', title: 'LOOK STRAIGHT', desc: 'Face the camera directly.', needsFace: true },
+                { key: 'left', title: 'TURN LEFT', desc: 'Slowly turn your head to the left.', needsFace: false },
+                { key: 'right', title: 'TURN RIGHT', desc: 'Slowly turn your head to the right.', needsFace: false },
+                { key: 'up', title: 'LOOK UP', desc: 'Slightly raise your head.', needsFace: false },
+                { key: 'down', title: 'LOOK DOWN', desc: 'Slightly lower your head.', needsFace: false }
+            ];
+
+            /* ----------------------------------------------------------------
+               Elements
+               ---------------------------------------------------------------- */
+            const modalEl = document.getElementById('registerFaceModal');
+            const video = document.getElementById('videoCamera');
+            const imgPreview = document.getElementById('imgPreview');
+            const overlay = document.getElementById('viewfinderOverlay');
+            const hintText = document.getElementById('cameraHintText');
+            const statusEl = document.getElementById('faceStatus');
+            const statusText = document.getElementById('faceStatusText');
+            const countdown = document.getElementById('faceCountdown');
+            const countdownNumber = document.getElementById('faceCountdownNumber');
+            const countdownRing = document.getElementById('faceCountdownRing');
+            const capturedPhotoInput = document.getElementById('capturedPhotoInput');
+            const capturedPhotosInput = document.getElementById('capturedPhotos');
+            const btnExitFace = document.getElementById('btnExitFace');
+            const btnRetakePosition = document.getElementById('btnRetakePosition');
+            const btnRetakeSelected = document.getElementById('btnRetakeSelected');
+            const btnRetakeAll = document.getElementById('btnRetakeAll');
+            const btnCancelRegistration = document.getElementById('btnCancelRegistration');
+            const btnCompleteRegistration = document.getElementById('btnCompleteRegistration');
+            const btnRegister = document.getElementById('btnRegister');
+            const btnCaptureFace = document.getElementById('btnCaptureFace');
+            const registerOverlay = document.getElementById('registerOverlay');
+            const employeeForm = document.getElementById('employeeForm');
+            const modalEmployeeInfo = document.getElementById('modalEmployeeInfo');
+            const employeeContext = document.getElementById('faceEmployeeContext');
+            const employeeIdEl = document.getElementById('faceEmployeeId');
+            const employeeNameEl = document.getElementById('faceEmployeeName');
+            const instructionPanel = document.getElementById('faceInstructionPanel');
+            const positionBadge = document.getElementById('facePositionBadge');
+            const positionTitle = document.getElementById('facePositionTitle');
+            const positionDesc = document.getElementById('facePositionDesc');
+            const reviewPanel = document.getElementById('faceReviewPanel');
+            const reviewGrid = document.getElementById('faceReviewGrid');
+            const reviewSelection = document.getElementById('faceReviewSelection');
+            const reviewSelectedLabel = document.getElementById('faceReviewSelectedLabel');
+
+            /* ----------------------------------------------------------------
+               State machine: CAPTURING -> REVIEW -> (retake/complete/cancel)
+               ---------------------------------------------------------------- */
+            const STATE = {
+                IDLE: 'idle',
+                CAPTURING: 'capturing',
+                COUNTDOWN: 'countdown',
+                POSITION_CAPTURED: 'position_captured',
+                REVIEW: 'review',
+                SAVING: 'saving'
+            };
+
+            let state = STATE.IDLE;
+            let countdownTimer = null;
+            let countdownLeft = 0;
+            let capturePending = false;
+            let stableStart = null;
+            let destroying = false;
+            let currentIndex = 0;
+            let selectedIndex = null;
+            let isRetaking = false;
+            let captures = POSITIONS.map(function () { return null; });
+            let faceTrackingAssetsPromise = null;
+
+            const COUNTDOWN_SECONDS = 3;
+            const STABLE_MS = 700;
+            const POSITION_MARGIN = 0.18;
+            const MIN_FACE_FRACTION = 0.22;
+
+            function loadScript(src, id) {
+                var existing = document.getElementById(id);
+                if (existing && existing.dataset.loaded === 'true') return Promise.resolve();
+
+                return new Promise(function (resolve, reject) {
+                    var script = existing || document.createElement('script');
+                    script.id = id;
+                    script.src = src;
+                    script.async = true;
+                    script.addEventListener('load', function () {
+                        script.dataset.loaded = 'true';
+                        resolve();
+                    }, { once: true });
+                    script.addEventListener('error', function () {
+                        script.remove();
+                        reject(new Error('Face tracking script could not be loaded.'));
+                    }, { once: true });
+                    if (!existing) document.head.appendChild(script);
+                });
+            }
+
+            function loadFaceTrackingAssets() {
+                if (!faceTrackingAssetsPromise) {
+                    faceTrackingAssetsPromise = (async function () {
+                        await loadScript(
+                            'https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js',
+                            'trackingScript');
+                        await loadScript(
+                            'https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js',
+                            'trackingFaceDataScript');
+                        if (typeof tracking === 'undefined' || !tracking.ObjectTracker) {
+                            throw new Error('Face tracking did not initialize.');
+                        }
+                    })().catch(function (error) {
+                        faceTrackingAssetsPromise = null;
+                        throw error;
+                    });
+                }
+                return faceTrackingAssetsPromise;
+            }
+
+            function setState(next) {
+                if (destroying) return;
+                state = next;
+                refreshUI();
+            }
+
+            function currentPosition() {
+                return POSITIONS[currentIndex];
+            }
+
+            function showInstruction() {
+                var pos = currentPosition();
+                if (positionBadge) positionBadge.textContent = 'Position ' + (currentIndex + 1) + ' of 5';
+                if (positionTitle) positionTitle.textContent = pos.title;
+                if (positionDesc) positionDesc.textContent = pos.desc;
+                if (instructionPanel) instructionPanel.hidden = false;
+            }
+
+            function hideInstruction() {
+                if (instructionPanel) instructionPanel.hidden = true;
+            }
+
+            function renderReviewGrid() {
+                if (!reviewGrid) return;
+                reviewGrid.innerHTML = '';
+                captures.forEach(function (dataUrl, i) {
+                    var slot = document.createElement('div');
+                    slot.className = 'face-review-slot' + (i === selectedIndex ? ' selected' : '');
+                    slot.dataset.index = i;
+
+                    var imgWrap = document.createElement('div');
+                    imgWrap.className = 'face-review-image-wrap';
+
+                    var img = document.createElement('img');
+                    img.className = 'face-review-image';
+                    img.alt = POSITIONS[i].title;
+                    img.src = dataUrl || '';
+                    if (!dataUrl) img.style.display = 'none';
+                    imgWrap.appendChild(img);
+
+                    var placeholder = document.createElement('div');
+                    placeholder.className = 'face-review-placeholder';
+                    placeholder.textContent = '—';
+                    placeholder.hidden = !!dataUrl;
+                    imgWrap.appendChild(placeholder);
+
+                    var btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'face-review-retake';
+                    btn.title = 'Retake ' + POSITIONS[i].title;
+                    btn.textContent = 'Retake';
+                    btn.addEventListener('click', function (ev) {
+                        ev.stopPropagation();
+                        selectReviewIndex(i);
+                        retakeReviewPosition(i);
+                    });
+                    imgWrap.appendChild(btn);
+
+                    var label = document.createElement('div');
+                    label.className = 'face-review-label';
+                    label.textContent = POSITIONS[i].title;
+
+                    slot.appendChild(imgWrap);
+                    slot.appendChild(label);
+
+                    slot.addEventListener('click', function () {
+                        selectReviewIndex(i);
+                    });
+
+                    reviewGrid.appendChild(slot);
+                });
+                if (reviewSelection) reviewSelection.hidden = selectedIndex === null;
+                if (reviewSelectedLabel && selectedIndex !== null) {
+                    reviewSelectedLabel.textContent = 'Selected: ' + POSITIONS[selectedIndex].title;
+                }
+            }
+
+            function selectReviewIndex(idx) {
+                selectedIndex = idx;
+                renderReviewGrid();
+                refreshUI();
+            }
+
+            /* ----------------------------------------------------------------
+               Face geometry: exactly one face, centred and large enough.
+               Used only for Capture 1 (LOOK STRAIGHT).
+               ---------------------------------------------------------------- */
+            function isFacePositioned(face) {
+                var rect = video.getBoundingClientRect();
+                if (!rect || rect.width === 0 || rect.height === 0) return false;
+                var mx = rect.width * POSITION_MARGIN;
+                var my = rect.height * POSITION_MARGIN;
+                var inside = face.x >= mx && face.y >= my &&
+                    face.x + face.width <= rect.width - mx &&
+                    face.y + face.height <= rect.height - my;
+                var bigEnough = face.width >= rect.width * MIN_FACE_FRACTION &&
+                    face.height >= rect.height * MIN_FACE_FRACTION;
+                return inside && bigEnough;
+            }
+
+            /* ----------------------------------------------------------------
+               Countdown: 3 -> 2 -> 1 -> Capture, one timer at a time.
+               For Capture 1 the countdown starts only after a valid face is
+               detected; for Captures 2–5 it starts immediately when the
+               position becomes active. The countdown resets when the face
+               leaves the required position (Capture 1 only).
+               ---------------------------------------------------------------- */
+            function cancelCountdown() {
+                if (countdownTimer) {
+                    clearInterval(countdownTimer);
+                    countdownTimer = null;
+                }
+                countdownLeft = 0;
+                stableStart = null;
+                if (countdown) countdown.hidden = true;
+            }
+
+            function renderCountdown(n) {
+                if (!countdown) return;
+                countdown.hidden = false;
+                countdownNumber.textContent = n;
+                countdownRing.classList.remove('countdown-animate');
+                void countdownRing.offsetWidth;
+                countdownRing.classList.add('countdown-animate');
+            }
+
+            function startCountdown() {
+                if (countdownTimer) return;
+                capturePending = false;
+                countdownLeft = COUNTDOWN_SECONDS;
+                setState(STATE.COUNTDOWN);
+                showHint('Hold still. Capturing automatically…');
+                renderCountdown(countdownLeft);
+                countdownTimer = setInterval(function () {
+                    countdownLeft--;
+                    if (countdownLeft > 0) {
+                        renderCountdown(countdownLeft);
+                    } else {
+                        cancelCountdown();
+                        doCapture();
+                    }
+                }, 1000);
+            }
+
+            async function doCapture() {
+                if (capturePending) return;
+                capturePending = true;
+                var dataUrl = Camera.capture();
+                if (!dataUrl) {
+                    capturePending = false;
+                    showError('Could not capture the frame. Make sure the camera is running.');
+                    setState(STATE.CAPTURING);
+                    return;
+                }
+                captures[currentIndex] = dataUrl;
+                capturedPhotoInput.value = dataUrl;
+                imgPreview.src = dataUrl;
+                imgPreview.hidden = false;
+                video.hidden = true;
+
+                // Freeze tracking boxes over the still.
+                var faceCanvas = document.getElementById('faceCanvas');
+                if (faceCanvas) {
+                    faceCanvas.classList.remove('is-tracking');
+                    var ctx = faceCanvas.getContext('2d');
+                    if (ctx) ctx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+                }
+
+                capturePending = false;
+                setState(STATE.POSITION_CAPTURED);
+
+                // Auto-advance after a brief preview.
+                setTimeout(function () {
+                    advancePosition();
+                }, 800);
+            }
+
+            function advancePosition() {
+                if (destroying) return;
+                if (isRetaking) {
+                    isRetaking = false;
+                    showReview();
+                    return;
+                }
+                currentIndex++;
+                if (currentIndex >= POSITIONS.length) {
+                    // All five positions captured -> final photo review.
+                    showReview();
+                    return;
+                }
+                imgPreview.hidden = true;
+                imgPreview.src = '';
+                video.hidden = false;
+                overlay.style.display = 'none';
+                cancelCountdown();
+                stableStart = null;
+                setState(STATE.CAPTURING);
+                showInstruction();
+                showHint('Position your face inside the frame.');
+            }
+
+            function showReview() {
+                hideInstruction();
+                video.hidden = true;
+                imgPreview.hidden = true;
+                overlay.style.display = 'none';
+                cancelCountdown();
+                stableStart = null;
+                selectedIndex = null;
+                renderReviewGrid();
+                setState(STATE.REVIEW);
+                showHint('All five positions captured. Review your photos.');
+            }
+
+            /* ----------------------------------------------------------------
+               Consumer of camera.js face tracking events.
+               Face detection gating applies only to Capture 1 (LOOK STRAIGHT).
+               ---------------------------------------------------------------- */
+            function onTrack(faces) {
+                if (destroying || state === STATE.SAVING || state === STATE.REVIEW) return;
+                if (state === STATE.POSITION_CAPTURED) return;
+
+                var pos = currentPosition();
+                // Captures 2–5 are timer-only: start countdown immediately.
+                if (!pos.needsFace) {
+                    if (state === STATE.CAPTURING && !countdownTimer) {
+                        startCountdown();
+                    }
+                    return;
+                }
+
+                // Capture 1: require a valid, centred face before counting down.
+                var now = Date.now();
+                var valid = faces.length === 1 && isFacePositioned(faces[0]);
+
+                if (valid) {
+                    if (!stableStart) stableStart = now;
+                    if (now - stableStart >= STABLE_MS && state !== STATE.COUNTDOWN) {
+                        startCountdown();
+                    }
+                } else {
+                    stableStart = null;
+                    if (state === STATE.COUNTDOWN) {
+                        cancelCountdown();
+                        setState(STATE.CAPTURING);
+                    }
+                    if (faces.length === 0) {
+                        showHint('Position your face inside the frame.');
+                    } else if (faces.length > 1) {
+                        showHint('Multiple faces detected. Show only one face.');
+                    } else {
+                        showHint('Move your face into the center of the frame.');
+                    }
+                }
+            }
+
+            /* ----------------------------------------------------------------
+               UI refresh
+               ---------------------------------------------------------------- */
+            function refreshUI() {
+                var counting = state === STATE.COUNTDOWN;
+                var captured = state === STATE.POSITION_CAPTURED;
+                var saving = state === STATE.SAVING;
+                var review = state === STATE.REVIEW;
+
+                video.hidden = captured || saving || review;
+                imgPreview.hidden = !captured;
+                countdown.hidden = !counting;
+                if (review) {
+                    hideInstruction();
+                    reviewPanel.hidden = false;
+                } else {
+                    reviewPanel.hidden = true;
+                }
+
+                if (state === STATE.IDLE) {
+                    overlay.style.display = 'flex';
+                } else if (!review) {
+                    overlay.style.display = 'none';
+                }
+
+                if (saving) {
+                    hintText.textContent = 'Enrolling your face…';
+                } else if (captured) {
+                    hintText.textContent = 'Position captured. Preparing next angle…';
+                    hintText.className = 'text-success small mt-3 mb-0';
+                } else if (review) {
+                    hintText.textContent = 'All five positions captured.';
+                    hintText.className = 'text-success small mt-3 mb-0';
+                } else {
+                    hintText.className = 'text-muted small mt-3 mb-0';
+                }
+
+                var statusLabel = 'Idle';
+                if (state === STATE.CAPTURING) statusLabel = 'Detecting face';
+                if (state === STATE.COUNTDOWN) statusLabel = 'Capturing automatically';
+                if (state === STATE.POSITION_CAPTURED) statusLabel = 'Captured';
+                if (state === STATE.SAVING) statusLabel = 'Saving…';
+                if (state === STATE.REVIEW) statusLabel = 'Photo review';
+                statusText.textContent = statusLabel;
+
+                var hasCurrentCapture = captures[currentIndex] != null;
+                var allComplete = captures.every(function (c) { return c != null; });
+
+                // Footer button visibility by state.
+                btnExitFace.hidden = review || saving;
+                btnRetakePosition.hidden = !(captured && hasCurrentCapture) || saving || review;
+                btnRetakeSelected.hidden = !review || saving || selectedIndex === null;
+                btnRetakeAll.hidden = !review || saving;
+                btnCancelRegistration.hidden = !review || saving;
+                btnCompleteRegistration.hidden = !review || saving || !allComplete;
+                if (btnRegister) btnRegister.disabled = !allComplete || saving;
+            }
+
+            function showHint(text) {
+                if (hintText) hintText.textContent = text;
+            }
+
+            function showError(text) {
+                showHint(text);
+                if (hintText) hintText.className = 'text-danger small mt-3 mb-0';
+                setOverlay('exclamation-triangle', text, true);
+            }
+
+            function setOverlay(icon, text, visible) {
+                if (!overlay) return;
+                overlay.innerHTML = '<i class="bi bi-' + icon + '"></i><span></span>';
+                var span = overlay.querySelector('span');
+                if (span) span.textContent = text;
+                overlay.style.display = visible ? 'flex' : 'none';
+            }
+
+            /* ----------------------------------------------------------------
+               Camera lifecycle
+               ---------------------------------------------------------------- */
+            async function startCamera() {
+                setState(STATE.IDLE);
+                Camera.setOnTrackingError(function () {
+                    showError('Face detection stopped unexpectedly. Close and reopen the capture window to try again.');
+                });
+                showHint('Requesting camera permission…');
+                setOverlay('hourglass-split', 'Starting camera…', true);
+
+                var permitted = window.Permissions
+                    ? await Permissions.ensure('camera', 'Face registration needs the camera to capture your face.')
+                    : true;
+
+                if (!permitted || permitted.camera !== true) {
+                    video.hidden = true;
+                    setOverlay('camera-video', 'Camera access needed — see the prompt above', true);
+                    setState(STATE.IDLE);
+                    return;
+                }
+
+                var trackingStartedAt = performance.now();
+                showHint('Loading face detection…');
+                setOverlay('hourglass-split', 'Loading face detection…', true);
+                try {
+                    await loadFaceTrackingAssets();
+                } catch (error) {
+                    console.error('Face tracking assets failed to load:', error);
+                    showError('Face detection could not be loaded. Check your connection and try again.');
+                    setState(STATE.IDLE);
+                    return;
+                }
+                console.info('[performance] face_tracking_assets_load_ms=' +
+                    Math.round(performance.now() - trackingStartedAt));
+
+                video.hidden = false;
+                var cameraStartedAt = performance.now();
+                var result = await Camera.start('videoCamera', 'canvasPreview');
+
+                if (!result || !result.ok) {
+                    var reason = (result && result.reason) || 'The camera could not be started.';
+                    video.hidden = true;
+                    showError(reason);
+                    setState(STATE.IDLE);
+                    return;
+                }
+                console.info('[performance] camera_initialization_ms=' +
+                    Math.round(performance.now() - cameraStartedAt));
+
+                overlay.style.display = 'none';
+                Camera.setOnTrack(onTrack);
+                currentIndex = 0;
+                captures = POSITIONS.map(function () { return null; });
+                selectedIndex = null;
+                capturedPhotoInput.value = '';
+                capturedPhotosInput.value = '';
+                setState(STATE.CAPTURING);
+                showInstruction();
+                showHint('Position your face inside the frame.');
+            }
+
+            function stopCamera() {
+                destroying = true;
+                cancelCountdown();
+                Camera.setOnTrack(null);
+                Camera.setOnTrackingError(null);
+                Camera.stop();
+                destroying = false;
+                captures = POSITIONS.map(function () { return null; });
+                currentIndex = 0;
+                selectedIndex = null;
+                capturePending = false;
+                stableStart = null;
+                imgPreview.hidden = true;
+                imgPreview.src = '';
+                capturedPhotoInput.value = '';
+                capturedPhotosInput.value = '';
+                video.hidden = true;
+                var faceCanvas = document.getElementById('faceCanvas');
+                if (faceCanvas) {
+                    faceCanvas.classList.remove('is-tracking');
+                    var ctx = faceCanvas.getContext('2d');
+                    if (ctx) ctx.clearRect(0, 0, faceCanvas.width, faceCanvas.height);
+                }
+                setState(STATE.IDLE);
+                setOverlay('camera', 'Camera is off', true);
+                showHint('Camera is off.');
+                refreshUI();
+            }
+
+            /* ----------------------------------------------------------------
+               Actions
+               ---------------------------------------------------------------- */
+            function retakePosition(idx) {
+                if (destroying || state === STATE.SAVING) return;
+                captures[idx] = null;
+                currentIndex = idx;
+                cancelCountdown();
+                stableStart = null;
+                imgPreview.hidden = true;
+                imgPreview.src = '';
+                video.hidden = false;
+                overlay.style.display = 'none';
+                selectedIndex = null;
+                renderReviewGrid();
+                setState(STATE.CAPTURING);
+                showInstruction();
+                showHint('Position your face inside the frame.');
+            }
+
+            function retakeReviewPosition(idx) {
+                if (destroying || state === STATE.SAVING) return;
+                captures[idx] = null;
+                currentIndex = idx;
+                selectedIndex = null;
+                isRetaking = true;
+                cancelCountdown();
+                stableStart = null;
+                imgPreview.hidden = true;
+                imgPreview.src = '';
+                video.hidden = false;
+                overlay.style.display = 'none';
+                renderReviewGrid();
+                setState(STATE.CAPTURING);
+                showInstruction();
+                showHint('Position your face inside the frame.');
+            }
+
+            async function completeRegistration() {
+                var allComplete = captures.every(function (c) { return c != null; });
+                if (!allComplete || state === STATE.SAVING) return;
+                setState(STATE.SAVING);
+                btnCompleteRegistration.disabled = true;
+                btnRetakeSelected.disabled = true;
+                btnRetakeAll.disabled = true;
+                btnCancelRegistration.disabled = true;
+                btnExitFace.disabled = true;
+
+                capturedPhotosInput.value = JSON.stringify(captures);
+                capturedPhotoInput.value = '';
+                employeeForm.requestSubmit();
+            }
+
+            /* ----------------------------------------------------------------
+               Modal lifecycle: auto-initialise camera on open, release on close.
+               ---------------------------------------------------------------- */
+            function restoreEmployeeContext() {
+                var employeeId = document.getElementById('EmployeeId');
+                var fullName = document.getElementById('FullName');
+                if (employeeContext && employeeId && fullName && (employeeId.value || fullName.value)) {
+                    employeeContext.classList.remove('d-none');
+                    if (employeeIdEl) employeeIdEl.textContent = employeeId.value ? 'ID: ' + employeeId.value : '';
+                    if (employeeNameEl) employeeNameEl.textContent = fullName.value || '';
+                    if (modalEmployeeInfo) {
+                        modalEmployeeInfo.textContent = (fullName.value || '') + ' · ' + (employeeId.value || '');
+                        modalEmployeeInfo.classList.remove('d-none');
+                    }
+                }
+            }
+
+            modalEl.addEventListener('show.bs.modal', async function () {
+                restoreEmployeeContext();
+                cancelCountdown();
+                captures = POSITIONS.map(function () { return null; });
+                currentIndex = 0;
+                selectedIndex = null;
+                capturePending = false;
+                capturedPhotoInput.value = '';
+                capturedPhotosInput.value = '';
+                imgPreview.hidden = true;
+                imgPreview.src = '';
+                reviewPanel.hidden = true;
+                video.hidden = true;
+                await startCamera();
+            });
+
+            modalEl.addEventListener('hidden.bs.modal', function () {
+                stopCamera();
+            });
+
+            btnExitFace.addEventListener('click', function () {
+                if (state === STATE.SAVING) return;
+                if (confirm('Are you sure you want to cancel face registration? Your unsaved photos will be discarded.')) {
+                    stopCamera();
+                    modalEl.hide();
+                }
+            });
+
+            btnRetakePosition.addEventListener('click', function () {
+                retakePosition(currentIndex);
+            });
+
+            btnRetakeSelected.addEventListener('click', function () {
+                if (selectedIndex === null || state === STATE.SAVING) return;
+                retakeReviewPosition(selectedIndex);
+            });
+
+            btnRetakeAll.addEventListener('click', function () {
+                if (state === STATE.SAVING) return;
+                if (!confirm('Are you sure you want to retake all photos? Your current captured photos will be discarded.')) return;
+                captures = POSITIONS.map(function () { return null; });
+                currentIndex = 0;
+                selectedIndex = null;
+                cancelCountdown();
+                stableStart = null;
+                imgPreview.hidden = true;
+                imgPreview.src = '';
+                capturedPhotoInput.value = '';
+                capturedPhotosInput.value = '';
+                video.hidden = false;
+                overlay.style.display = 'none';
+                renderReviewGrid();
+                setState(STATE.CAPTURING);
+                showInstruction();
+                showHint('Position your face inside the frame.');
+            });
+
+            btnCancelRegistration.addEventListener('click', function () {
+                if (state === STATE.SAVING) return;
+                if (!confirm('Are you sure you want to cancel face registration? Your unsaved photos will be discarded.')) return;
+                stopCamera();
+                modalEl.hide();
+            });
+
+            btnCompleteRegistration.addEventListener('click', completeRegistration);
+
+            /* ----------------------------------------------------------------
+               Form submit: hands all captured photos to the existing Create
+               controller (image storage, FastAPI encoding, duplicate check,
+               employee record). The register overlay shows the loading state.
+               ---------------------------------------------------------------- */
+            employeeForm.addEventListener('submit', function (e) {
+                if (registerOverlay.classList.contains('is-active')) {
+                    e.preventDefault();
+                    return;
+                }
+                if (!capturedPhotosInput.value || capturedPhotosInput.value === '[]') {
+                    e.preventDefault();
+                    showError('Please capture all five face positions before registering.');
+                    return;
+                }
+                if (btnRegister) {
+                    btnRegister.disabled = true;
+                    btnRegister.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Registering…';
+                }
+                startRegisterOverlay();
+            });
+
+            /* ----------------------------------------------------------------
+               Registration overlay — loading state during enrollment.
+               ---------------------------------------------------------------- */
+            const STAGE_DELAYS = [400, 900, Math.max(6000, 3500), 2500, 1200];
+            let stageTimer = null;
+            let stageIndex = 0;
+            const registerSteps = document.querySelectorAll('#registerSteps .register-step');
+
+            function setStage(index) {
+                registerSteps.forEach(function (step, i) {
+                    step.classList.remove('is-active', 'is-done');
+                    if (i < index) step.classList.add('is-done');
+                    else if (i === index) step.classList.add('is-active');
+                });
+            }
+
+            function advanceStage() {
+                stageIndex++;
+                if (stageIndex >= STAGE_DELAYS.length) return;
+                setStage(stageIndex);
+                stageTimer = setTimeout(advanceStage, STAGE_DELAYS[stageIndex]);
+            }
+
+            function startRegisterOverlay() {
+                if (registerOverlay.classList.contains('is-active')) return;
+                registerOverlay.classList.add('is-active');
+                stageIndex = 0;
+                setStage(0);
+                stageTimer = setTimeout(advanceStage, STAGE_DELAYS[0]);
+            }
+
+            window.addEventListener('pageshow', function (e) {
+                if (e.persisted) {
+                    registerOverlay.classList.remove('is-active');
+                    if (stageTimer) { clearTimeout(stageTimer); stageTimer = null; }
+                }
+            });
+
+            window.addEventListener('load', function () {
+                console.info('[performance] registration_page_load_ms=' +
+                    Math.round(performance.now()));
+            }, { once: true });
+        })();
+    </script>
+}
