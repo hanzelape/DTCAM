@@ -203,6 +203,100 @@ public class FaceRecognitionService
         }
     }
 
+    /// <summary>
+    /// Liveness-checked recognition. Sends a burst of frames plus the
+    /// server-chosen head-turn direction; the Python API requires a frontal
+    /// frame followed by a frame turned that way, all showing the same person,
+    /// and identifies that person against <paramref name="candidates"/>.
+    /// </summary>
+    public async Task<RecognitionResult> RecognizeWithLivenessAsync(
+        IReadOnlyList<byte[]> frames,
+        string challengeDirection,
+        IEnumerable<Employee> candidates)
+    {
+        if (string.IsNullOrWhiteSpace(_options.ApiUrl))
+            return RecognitionResult.NotImplemented();
+
+        var stopwatch = Stopwatch.StartNew();
+        try
+        {
+            using var content = new MultipartFormDataContent();
+
+            for (var i = 0; i < frames.Count; i++)
+            {
+                var frameContent = new ByteArrayContent(frames[i]);
+                frameContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("image/jpeg");
+                content.Add(frameContent, "images", $"frame{i}.jpg");
+            }
+
+            content.Add(new StringContent(challengeDirection, Encoding.UTF8), "challenge");
+
+            var knownContent = new StringContent(JsonSerializer.Serialize(BuildKnownFaces(candidates)), Encoding.UTF8);
+            knownContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/json");
+            content.Add(knownContent, "known_faces");
+
+            var response = await _httpClient.PostAsync($"{_options.ApiUrl.TrimEnd('/')}/recognize-live", content);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Liveness recognition failed with status {StatusCode}.", (int)response.StatusCode);
+                return RecognitionResult.Failed("The face recognition service rejected the request. Please try again.");
+            }
+
+            var result = await response.Content.ReadFromJsonAsync<LiveRecognizeResponse>();
+            if (result == null)
+                return RecognitionResult.Failed("Recognition API returned no data.");
+
+            if (!result.LivenessPassed)
+                return new RecognitionResult
+                {
+                    IsRecognized = false,
+                    LivenessPassed = false,
+                    ErrorMessage = result.LivenessReason ?? "Liveness check failed. Please try again."
+                };
+
+            if (!result.IsRecognized || result.Confidence < _options.MinConfidence)
+                return new RecognitionResult
+                {
+                    IsRecognized = false,
+                    LivenessPassed = true,
+                    Confidence = result.Confidence,
+                    ErrorMessage = "Identity could not be verified."
+                };
+
+            return new RecognitionResult
+            {
+                IsRecognized = true,
+                LivenessPassed = true,
+                EmployeeId = result.EmployeeId,
+                EmployeeName = result.EmployeeName,
+                Confidence = result.Confidence
+            };
+        }
+        catch (HttpRequestException ex)
+        {
+            _logger.LogError(ex, "Liveness recognition request failed.");
+            return RecognitionResult.Failed("Could not reach the face recognition service.");
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Liveness recognition request timed out.");
+            return RecognitionResult.Failed("The face recognition service timed out. Please try again.");
+        }
+        catch (JsonException ex)
+        {
+            _logger.LogError(ex, "Liveness recognition response could not be parsed.");
+            return RecognitionResult.Failed("The face recognition service returned invalid data.");
+        }
+        finally
+        {
+            _logger.LogInformation(
+                "face_api_operation=recognize_live elapsed_ms={ElapsedMilliseconds} frames={Frames}",
+                stopwatch.Elapsed.TotalMilliseconds,
+                frames.Count);
+        }
+    }
+
     // Checks whether a new face already exists among registered employees.
     // Returns the matched employee, or null if the face is unknown (unique).
     public async Task<RecognitionResult> CheckDuplicateFaceAsync(byte[] imageBytes, IEnumerable<Employee> existingEmployees)
@@ -346,6 +440,15 @@ public class FaceRecognitionService
         public double Confidence { get; set; }
     }
 
+    private class LiveRecognizeResponse : RecognizeResponse
+    {
+        [JsonPropertyName("liveness_passed")]
+        public bool LivenessPassed { get; set; }
+
+        [JsonPropertyName("liveness_reason")]
+        public string? LivenessReason { get; set; }
+    }
+
     private class ApiErrorResponse
     {
         [JsonPropertyName("detail")]
@@ -376,4 +479,7 @@ public class FaceRecognitionOptions
     public double MinConfidence { get; set; } = 0.45;
     public long MaxUploadSizeKB { get; set; } = 2048;
     public string? UploadDirectory { get; set; }
+
+    /// <summary>Shared secret sent as X-Api-Key; the Python API rejects requests without it.</summary>
+    public string? ApiKey { get; set; }
 }

@@ -25,10 +25,14 @@
    python3 -m venv venv
    source venv/bin/activate
    pip install -r requirements.txt
-   cp /opt/faceattendance/deploy/.env.example .env  # edit values
+   cp /opt/faceattendance/deploy/.env.example .env  # edit values (FACE_API_KEY is required)
+   chmod 600 .env
 
 5. ASP.NET build:
    cd /opt/faceattendance
+   cp deploy/.env.example .env && chmod 600 .env   # set FaceRecognition__ApiKey (same value as FACE_API_KEY)
+                                                   # and Admin__InitialUsername / Admin__InitialPassword
+   dotnet ef database update                       # applies AddSecurityHardening (lockout + audit columns)
    dotnet publish -c Release -o /opt/faceattendance/publish
    # update WorkingDirectory/ExecStart paths accordingly or use publish dir
 
@@ -47,4 +51,18 @@
 8. Verify:
    sudo systemctl status face-recognition face-attendance
    curl https://YOUR_DOMAIN
-   # FastAPI not publicly exposed (127.0.0.1 only)
+   # FastAPI not publicly exposed (127.0.0.1 only) and rejects calls without X-Api-Key
+
+## Security notes
+- No default admin exists. The first admin is created from Admin__InitialUsername /
+  Admin__InitialPassword and must change the password at first login. Any existing admin
+  still on the old default password is flagged at startup and blocked until it is changed.
+- Logins lock for 15 minutes after 5 wrong passwords (admin and employee).
+- Per-IP rate limits: 10/min on login, 30/min on check-in. The client IP comes from
+  X-Forwarded-For, trusted only from the local nginx (127.0.0.1).
+- Check-in requires a head-turn liveness challenge and a GPS fix (accuracy <= 100 m) inside an
+  active location. Coordinates, matched location, distance and client IP are stored on each
+  attendance record. A browser cannot prove GPS is not spoofed; requiring it, validating it on
+  the server and logging it is the realistic mitigation.
+- Remaining liveness gap: a replayed video of the right person turning the right way.
+  A passive anti-spoof model (e.g. MiniFASNet ONNX) would cover that.

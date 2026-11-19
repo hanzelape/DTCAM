@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace FaceAttendanceSystem.Models;
 
 [Table("Employees")]
-public class Employee
+public class Employee : ILockableAccount
 {
     public int Id { get; set; }
 
@@ -33,4 +33,8 @@ public class Employee
     public string? Email { get; set; }
 
     public string? PasswordHash { get; set; }
+
+    public int FailedLoginCount { get; set; }
+
+    public DateTime? LockoutEndUtc { get; set; }
 }

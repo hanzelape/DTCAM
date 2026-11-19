@@ -6,29 +6,38 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace FaceAttendanceSystem.Controllers;
 
-[AllowAnonymous]
+// Every action requires the employee cookie; only the two Login actions are
+// anonymous. (A class-level [AllowAnonymous] overrides every [Authorize], and
+// because the admin cookie is the default scheme, an anonymous request would
+// also read the admin's NameIdentifier as an employee id.)
+[Authorize(AuthenticationSchemes = "EmployeeCookie")]
 public class EmployeeController : Controller
 {
     private readonly ApplicationDbContext _context;
     private readonly AttendanceService _attendanceService;
     private readonly FaceRecognitionService _faceRecognitionService;
+    private readonly GeofenceService _geofenceService;
 
     public EmployeeController(
         ApplicationDbContext context,
         AttendanceService attendanceService,
-        FaceRecognitionService faceRecognitionService)
+        FaceRecognitionService faceRecognitionService,
+        GeofenceService geofenceService)
     {
         _context = context;
         _attendanceService = attendanceService;
         _faceRecognitionService = faceRecognitionService;
+        _geofenceService = geofenceService;
     }
 
     [HttpGet]
+    [AllowAnonymous]
     public async Task<IActionResult> Login(string? returnUrl = null)
     {
         var result = await HttpContext.AuthenticateAsync("EmployeeCookie");
@@ -40,7 +49,9 @@ public class EmployeeController : Controller
     }
 
     [HttpPost]
+    [AllowAnonymous]
     [ValidateAntiForgeryToken]
+    [EnableRateLimiting(RateLimitPolicies.Login)]
     public async Task<IActionResult> Login(EmployeeLoginViewModel model, string? returnUrl = null)
     {
         if (!ModelState.IsValid)
@@ -52,10 +63,24 @@ public class EmployeeController : Controller
         var employee = await _context.Employees
             .FirstOrDefaultAsync(e => e.Email == model.Email);
 
+        if (employee != null && LoginLockout.IsLockedOut(employee))
+        {
+            ModelState.AddModelError(string.Empty, LoginLockout.LockedMessage);
+            ViewData["ReturnUrl"] = returnUrl;
+            return View(model);
+        }
+
         if (employee == null || string.IsNullOrEmpty(employee.PasswordHash) ||
             !PasswordHasher.VerifyPassword(model.Password, employee.PasswordHash))
         {
-            ModelState.AddModelError(string.Empty, "Invalid email or password.");
+            var locked = false;
+            if (employee != null)
+            {
+                locked = LoginLockout.RegisterFailure(employee);
+                await _context.SaveChangesAsync();
+            }
+
+            ModelState.AddModelError(string.Empty, locked ? LoginLockout.LockedMessage : "Invalid email or password.");
             ViewData["ReturnUrl"] = returnUrl;
             return View(model);
         }
@@ -66,6 +91,9 @@ public class EmployeeController : Controller
             ViewData["ReturnUrl"] = returnUrl;
             return View(model);
         }
+
+        LoginLockout.RegisterSuccess(employee);
+        await _context.SaveChangesAsync();
 
         var claims = new List<Claim>
         {
@@ -105,14 +133,12 @@ public class EmployeeController : Controller
     /// Optional page for pre-granting camera/location access. Not a gate.
     /// </summary>
     [HttpGet]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public IActionResult GrantPermissions()
     {
         return View("~/Views/Shared/GrantPermissions.cshtml");
     }
 
     [HttpPost]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     [ValidateAntiForgeryToken]
     [ActionName("GrantPermissions")]
     public IActionResult GrantPermissionsPost()
@@ -121,7 +147,6 @@ public class EmployeeController : Controller
         return RedirectToAction("Dashboard");
     }
 
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public async Task<IActionResult> Dashboard()
     {
         // No permission gate — the dashboard is always reachable.
@@ -151,7 +176,6 @@ public class EmployeeController : Controller
     }
 
     [HttpGet]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public async Task<IActionResult> Schedules()
     {
         var employeeId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -175,7 +199,6 @@ public class EmployeeController : Controller
     }
 
     [HttpGet]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public async Task<IActionResult> Records()
     {
         var employeeId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -198,106 +221,81 @@ public class EmployeeController : Controller
     }
 
     [HttpGet]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public IActionResult CheckIn()
     {
         return View();
     }
 
+    /// <summary>
+    /// Issues a single-use head-turn challenge (valid 60 s), stored in the session.
+    /// </summary>
     [HttpPost]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting(RateLimitPolicies.CheckIn)]
+    public IActionResult LivenessChallenge()
+    {
+        var challenge = LivenessChallengeStore.Issue(HttpContext.Session);
+        return Json(new
+        {
+            challengeId = challenge.Id,
+            direction = challenge.Direction,
+            expiresInSeconds = (int)LivenessChallengeStore.Lifetime.TotalSeconds
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting(RateLimitPolicies.CheckIn)]
     public async Task<IActionResult> Recognize([FromBody] RecognizeRequest request)
     {
-        if (request == null || string.IsNullOrWhiteSpace(request.Image))
+        // Consume first: the challenge is single-use whatever happens next.
+        var challenge = LivenessChallengeStore.Consume(HttpContext.Session, request?.ChallengeId);
+
+        if (request == null)
             return Json(new { success = false, message = "No image received." });
 
-        var employeeId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        if (string.IsNullOrEmpty(employeeId))
-            return Json(new { success = false, message = "Not authenticated." });
+        if (!int.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var employeeKey))
+            return Unauthorized(new { success = false, message = "Not authenticated." });
 
-        var imageBytes = Convert.FromBase64String(request.Image.Split(',')[1]);
-        var maxBytes = 2 * 1024 * 1024;
-        if (imageBytes.Length > maxBytes)
-            return Json(new { success = false, message = "Image too large." });
+        if (challenge == null)
+            return Json(new { success = false, message = "The liveness challenge expired. Please try again." });
 
-        var employee = await _context.Employees.FindAsync(int.Parse(employeeId));
-        if (employee == null || string.IsNullOrWhiteSpace(employee.FaceEncoding))
+        if (!request.TryDecodeFrames(out var frames, out var frameError))
+            return Json(new { success = false, message = frameError });
+
+        var employee = await _context.Employees.FindAsync(employeeKey);
+        if (employee == null || !employee.IsActive)
+            return Unauthorized(new { success = false, message = "Not authenticated." });
+
+        if (string.IsNullOrWhiteSpace(employee.FaceEncoding))
             return Json(new { success = false, message = "Face not registered." });
 
-        var candidates = new List<Employee> { employee };
-        var result = await _faceRecognitionService.RecognizeFaceAsync(imageBytes, candidates);
-
-        if (!result.IsRecognized || result.EmployeeId == null)
-        {
-            return Json(new
-            {
-                success = false,
-                message = result.ErrorMessage ?? "Face not recognized. Please try again."
-            });
-        }
-
-        if (result.EmployeeId.Value != employee.Id)
-        {
-            return Json(new { success = false, message = "Face does not match your account." });
-        }
+        // Geofence (server-side, fail-closed) before the expensive face call.
+        var activeLocations = await _context.Locations.Where(l => l.IsActive).ToListAsync();
+        var geofence = _geofenceService.Evaluate(request.Latitude, request.Longitude, request.Accuracy, activeLocations);
+        if (!geofence.Allowed)
+            return Json(new { success = false, message = geofence.Message });
 
         var schedule = await FindClosestScheduleAsync(employee.Id);
         if (schedule == null)
             return Json(new { success = false, message = "No active schedule found for you today." });
 
+        var result = await _faceRecognitionService.RecognizeWithLivenessAsync(
+            frames, challenge.Direction, new[] { employee });
+
+        if (!result.LivenessPassed)
+            return Json(new { success = false, message = result.ErrorMessage ?? "Liveness check failed. Please try again." });
+
+        if (!result.IsRecognized || result.EmployeeId == null)
+            return Json(new { success = false, message = result.ErrorMessage ?? "Face not recognized. Please try again." });
+
+        if (result.EmployeeId.Value != employee.Id)
+            return Json(new { success = false, message = "Face does not match your account." });
+
         var now = DateTime.Now;
         var scheduleEnd = schedule.Date.Date + schedule.EndTime;
         if (now > scheduleEnd)
-        {
-            return Json(new
-            {
-                success = false,
-                message = "Check-in time has passed. Marked absent."
-            });
-        }
-
-        if (request.Latitude.HasValue && request.Longitude.HasValue)
-        {
-            var locations = await _context.Locations.ToListAsync();
-            var inside = false;
-
-            foreach (var loc in locations)
-            {
-                var distance = CalculateDistance(
-                    request.Latitude.Value,
-                    request.Longitude.Value,
-                    loc.Latitude,
-                    loc.Longitude);
-
-                if (distance <= loc.RadiusMeters)
-                {
-                    inside = true;
-                    break;
-                }
-            }
-
-            if (!inside && locations.Any())
-            {
-                var nearest = locations
-                    .Select(l => new
-                    {
-                        Location = l,
-                        Distance = CalculateDistance(
-                            request.Latitude.Value,
-                            request.Longitude.Value,
-                            l.Latitude,
-                            l.Longitude)
-                    })
-                    .OrderBy(x => x.Distance)
-                    .FirstOrDefault();
-
-                return Json(new
-                {
-                    success = false,
-                    message = $"You are outside the allowed check-in area ({nearest!.Distance:F0)} m from {nearest.Location.Name}, limit {nearest.Location.RadiusMeters} m)."
-                });
-            }
-        }
+            return Json(new { success = false, message = "Check-in time has passed. Marked absent." });
 
         var alreadyRecorded = await _context.Attendances.AnyAsync(a =>
             a.EmployeeId == employee.Id &&
@@ -316,7 +314,14 @@ public class EmployeeController : Controller
             TimeRecorded = now,
             Status = status,
             Subject = schedule.Title,
-            ConfidenceScore = (decimal)result.Confidence
+            ConfidenceScore = (decimal)result.Confidence,
+            CheckInLatitude = request.Latitude,
+            CheckInLongitude = request.Longitude,
+            CheckInAccuracyMeters = request.Accuracy,
+            CheckInLocationId = geofence.LocationId,
+            CheckInDistanceMeters = geofence.DistanceMeters,
+            CheckInIpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            LivenessPassed = true
         };
 
         _context.Attendances.Add(attendance);
@@ -380,23 +385,8 @@ public class EmployeeController : Controller
         return eligible.FirstOrDefault();
     }
 
-    private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
-    {
-        const double R = 6371000;
-        var dLat = ToRadians(lat2 - lat1);
-        var dLon = ToRadians(lon2 - lon1);
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
-                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return R * c;
-    }
-
-    private static double ToRadians(double deg) => deg * Math.PI / 180.0;
-
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public async Task<IActionResult> Logout()
     {
         await HttpContext.SignOutAsync("EmployeeCookie");
@@ -405,14 +395,12 @@ public class EmployeeController : Controller
     }
 
     [HttpGet]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public IActionResult Privacy()
     {
         return View();
     }
 
     [HttpGet]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public IActionResult ChangePassword()
     {
         return View();
@@ -420,7 +408,6 @@ public class EmployeeController : Controller
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    [Authorize(AuthenticationSchemes = "EmployeeCookie")]
     public async Task<IActionResult> ChangePassword(string currentPassword, string newPassword)
     {
         var employeeId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;

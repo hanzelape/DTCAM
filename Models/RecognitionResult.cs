@@ -12,6 +12,8 @@ public class RecognitionResult
 
     public string? ErrorMessage { get; set; }
 
+    public bool LivenessPassed { get; set; }
+
     public static RecognitionResult Failed(string message) =>
         new() { IsRecognized = false, ErrorMessage = message };
 

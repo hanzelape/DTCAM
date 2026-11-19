@@ -37,6 +37,18 @@ namespace FaceAttendanceSystem.Migrations
                         .IsRequired()
                         .HasColumnType("longtext");
 
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LockoutEndUtc")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("MustChangePassword")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("PasswordChangedAtUtc")
+                        .HasColumnType("datetime(6)");
+
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("longtext");
@@ -47,7 +59,7 @@ namespace FaceAttendanceSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Admins");
+                    b.ToTable("admins", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.AdminSession", b =>
@@ -92,7 +104,7 @@ namespace FaceAttendanceSystem.Migrations
                     b.HasIndex("SessionId")
                         .IsUnique();
 
-                    b.ToTable("AdminSessions");
+                    b.ToTable("adminsessions", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.Attendance", b =>
@@ -103,11 +115,33 @@ namespace FaceAttendanceSystem.Migrations
 
                     MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<double?>("CheckInAccuracyMeters")
+                        .HasColumnType("double");
+
+                    b.Property<double?>("CheckInDistanceMeters")
+                        .HasColumnType("double");
+
+                    b.Property<string>("CheckInIpAddress")
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)");
+
+                    b.Property<double?>("CheckInLatitude")
+                        .HasColumnType("double");
+
+                    b.Property<int?>("CheckInLocationId")
+                        .HasColumnType("int");
+
+                    b.Property<double?>("CheckInLongitude")
+                        .HasColumnType("double");
+
                     b.Property<decimal>("ConfidenceScore")
                         .HasColumnType("decimal(65,30)");
 
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
+
+                    b.Property<bool>("LivenessPassed")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<int>("ScheduleId")
                         .HasColumnType("int");
@@ -128,7 +162,7 @@ namespace FaceAttendanceSystem.Migrations
 
                     b.HasIndex("ScheduleId");
 
-                    b.ToTable("Attendances");
+                    b.ToTable("attendances", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.Department", b =>
@@ -148,7 +182,7 @@ namespace FaceAttendanceSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Departments");
+                    b.ToTable("departments", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.Employee", b =>
@@ -178,12 +212,18 @@ namespace FaceAttendanceSystem.Migrations
                     b.Property<string>("FaceEncodings")
                         .HasColumnType("longtext");
 
+                    b.Property<int>("FailedLoginCount")
+                        .HasColumnType("int");
+
                     b.Property<string>("FullName")
                         .IsRequired()
                         .HasColumnType("longtext");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTime?>("LockoutEndUtc")
+                        .HasColumnType("datetime(6)");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("longtext");
@@ -208,7 +248,7 @@ namespace FaceAttendanceSystem.Migrations
                     b.HasIndex("EmployeeId")
                         .IsUnique();
 
-                    b.ToTable("Employees");
+                    b.ToTable("employees", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.EmployeeDeletionAudit", b =>
@@ -237,7 +277,7 @@ namespace FaceAttendanceSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("EmployeeDeletionAudits");
+                    b.ToTable("employeedeletionaudits", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.Location", b =>
@@ -269,7 +309,7 @@ namespace FaceAttendanceSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Locations");
+                    b.ToTable("locations", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.Schedule", b =>
@@ -314,7 +354,7 @@ namespace FaceAttendanceSystem.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Schedules");
+                    b.ToTable("schedules", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.ScheduleEmployeeAssignment", b =>
@@ -338,7 +378,7 @@ namespace FaceAttendanceSystem.Migrations
                     b.HasIndex("ScheduleId", "EmployeeId")
                         .IsUnique();
 
-                    b.ToTable("ScheduleEmployeeAssignments");
+                    b.ToTable("scheduleemployeeassignments", (string)null);
                 });
 
             modelBuilder.Entity("FaceAttendanceSystem.Models.AdminSession", b =>

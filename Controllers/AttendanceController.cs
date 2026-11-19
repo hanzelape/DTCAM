@@ -2,9 +2,11 @@ using System.Text.Json;
 using FaceAttendanceSystem.Data;
 using FaceAttendanceSystem.Models;
 using FaceAttendanceSystem.Services;
+using FaceAttendanceSystem.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 
 namespace FaceAttendanceSystem.Controllers;
@@ -15,15 +17,18 @@ public class AttendanceController : Controller
     private readonly ApplicationDbContext _context;
     private readonly AttendanceService _attendanceService;
     private readonly FaceRecognitionService _faceRecognitionService;
+    private readonly GeofenceService _geofenceService;
 
     public AttendanceController(
         ApplicationDbContext context,
         AttendanceService attendanceService,
-        FaceRecognitionService faceRecognitionService)
+        FaceRecognitionService faceRecognitionService,
+        GeofenceService geofenceService)
     {
         _context = context;
         _attendanceService = attendanceService;
         _faceRecognitionService = faceRecognitionService;
+        _geofenceService = geofenceService;
     }
 
     public async Task<IActionResult> Index()
@@ -55,23 +60,54 @@ public class AttendanceController : Controller
         return View();
     }
 
-    // Webcam-based face recognition check-in (called from attendance.js via fetch).
+    /// <summary>
+    /// Issues a single-use head-turn challenge (valid 60 s) for the kiosk.
+    /// </summary>
     [HttpPost]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting(RateLimitPolicies.CheckIn)]
+    public IActionResult LivenessChallenge()
+    {
+        var challenge = LivenessChallengeStore.Issue(HttpContext.Session);
+        return Json(new
+        {
+            challengeId = challenge.Id,
+            direction = challenge.Direction,
+            expiresInSeconds = (int)LivenessChallengeStore.Lifetime.TotalSeconds
+        });
+    }
+
+    // Kiosk face check-in (called from attendance.js via fetch). Same liveness
+    // and geofence rules as the employee self check-in.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [EnableRateLimiting(RateLimitPolicies.CheckIn)]
     public async Task<IActionResult> Recognize([FromBody] RecognizeRequest request)
     {
-        if (request == null || string.IsNullOrWhiteSpace(request.Image))
+        var challenge = LivenessChallengeStore.Consume(HttpContext.Session, request?.ChallengeId);
+
+        if (request == null)
             return Json(new { success = false, message = "No image received." });
 
-        var imageBytes = Convert.FromBase64String(request.Image.Split(',')[1]);
-        var maxBytes = 2 * 1024 * 1024;
-        if (imageBytes.Length > maxBytes)
-            return Json(new { success = false, message = "Image too large." });
+        if (challenge == null)
+            return Json(new { success = false, message = "The liveness challenge expired. Please try again." });
+
+        if (!request.TryDecodeFrames(out var frames, out var frameError))
+            return Json(new { success = false, message = frameError });
+
+        var activeLocations = await _context.Locations.Where(l => l.IsActive).ToListAsync();
+        var geofence = _geofenceService.Evaluate(request.Latitude, request.Longitude, request.Accuracy, activeLocations);
+        if (!geofence.Allowed)
+            return Json(new { success = false, message = geofence.Message });
 
         var candidates = await _context.Employees
             .Where(p => p.IsActive && !string.IsNullOrWhiteSpace(p.FaceEncoding))
             .ToListAsync();
 
-        var result = await _faceRecognitionService.RecognizeFaceAsync(imageBytes, candidates);
+        var result = await _faceRecognitionService.RecognizeWithLivenessAsync(frames, challenge.Direction, candidates);
+
+        if (!result.LivenessPassed)
+            return Json(new { success = false, message = result.ErrorMessage ?? "Liveness check failed. Please try again." });
 
         if (!result.IsRecognized || result.EmployeeId == null)
         {
@@ -101,53 +137,6 @@ public class AttendanceController : Controller
             });
         }
 
-        if (request.Latitude.HasValue && request.Longitude.HasValue)
-        {
-            var locations = await _context.Locations.ToListAsync();
-            var inside = false;
-            Location? matchedLocation = null;
-            double matchedDistance = 0;
-
-            foreach (var loc in locations)
-            {
-                var distance = CalculateDistance(
-                    request.Latitude.Value,
-                    request.Longitude.Value,
-                    loc.Latitude,
-                    loc.Longitude);
-
-                if (distance <= loc.RadiusMeters)
-                {
-                    inside = true;
-                    matchedLocation = loc;
-                    matchedDistance = distance;
-                    break;
-                }
-            }
-
-            if (!inside && locations.Any())
-            {
-                var nearest = locations
-                    .Select(l => new
-                    {
-                        Location = l,
-                        Distance = CalculateDistance(
-                            request.Latitude.Value,
-                            request.Longitude.Value,
-                            l.Latitude,
-                            l.Longitude)
-                    })
-                    .OrderBy(x => x.Distance)
-                    .FirstOrDefault();
-
-                return Json(new
-                {
-                    success = false,
-                    message = $"You are outside the allowed check-in area ({nearest!.Distance:F0)} m from {nearest.Location.Name}, limit {nearest.Location.RadiusMeters} m)."
-                });
-            }
-        }
-
         var alreadyRecorded = await _context.Attendances.AnyAsync(a =>
             a.EmployeeId == employee.Id &&
             a.ScheduleId == schedule.Id);
@@ -174,7 +163,14 @@ public class AttendanceController : Controller
             TimeRecorded = now,
             Status = status,
             Subject = schedule.Title,
-            ConfidenceScore = (decimal)result.Confidence
+            ConfidenceScore = (decimal)result.Confidence,
+            CheckInLatitude = request.Latitude,
+            CheckInLongitude = request.Longitude,
+            CheckInAccuracyMeters = request.Accuracy,
+            CheckInLocationId = geofence.LocationId,
+            CheckInDistanceMeters = geofence.DistanceMeters,
+            CheckInIpAddress = HttpContext.Connection.RemoteIpAddress?.ToString(),
+            LivenessPassed = true
         };
 
         _context.Attendances.Add(attendance);
@@ -333,25 +329,4 @@ public class AttendanceController : Controller
             "Id",
             "Title");
     }
-
-    private static double CalculateDistance(double lat1, double lon1, double lat2, double lon2)
-    {
-        const double R = 6371000;
-        var dLat = ToRadians(lat2 - lat1);
-        var dLon = ToRadians(lon2 - lon1);
-        var a = Math.Sin(dLat / 2) * Math.Sin(dLat / 2) +
-                Math.Cos(ToRadians(lat1)) * Math.Cos(ToRadians(lat2)) *
-                Math.Sin(dLon / 2) * Math.Sin(dLon / 2);
-        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-        return R * c;
-    }
-
-    private static double ToRadians(double deg) => deg * Math.PI / 180.0;
-}
-
-public class RecognizeRequest
-{
-    public string? Image { get; set; }
-    public double? Latitude { get; set; }
-    public double? Longitude { get; set; }
 }

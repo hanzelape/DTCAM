@@ -2,6 +2,8 @@
     ViewData["Title"] = "Facial Recognition";
 }
 
+@Html.AntiForgeryToken()
+
 <div class="checkin-page">
     <div class="checkin-card mx-auto">
         <div class="checkin-card-header">
@@ -10,7 +12,7 @@
             </div>
             <div>
                 <h1 class="page-title" style="font-size:22px;">Facial Recognition</h1>
-                <p>Look at the camera to check in automatically. Multiple people can check in consecutively.</p>
+                <p>Step in front of the camera, look straight, then turn your head when asked. Multiple people can check in one after another.</p>
             </div>
         </div>
 
@@ -48,6 +50,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/tracking-min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tracking.js/1.1.3/data/face-min.js"></script>
     <script src="~/js/camera.js" asp-append-version="true"></script>
+    <script src="~/js/liveness.js" asp-append-version="true"></script>
     <script src="~/js/attendance.js" asp-append-version="true"></script>
     <script>
         const btnStart = document.getElementById('btnStartCamera');
